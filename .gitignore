@@ -1,0 +1,10 @@
+# DIRS
+__pycache__
+.pytest_cache
+.vscode
+.DS_Store
+*.egg-info
+logs
+venv
+dist
+results
