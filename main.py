@@ -12,11 +12,11 @@ CPD = Path(__file__).resolve().parent
 
 sys.path.append(CPD.joinpath("src").as_posix())
 
-from alpha_shape import AlphaShape, AlphaShape2D, AlphaShape3D
-from cluster import Cluster, ClusterEvaluate
-from config import Config
-from io_handler import IOHandler
-from plot import Plot
+from alpha_clustering.alpha_shape import AlphaShape, AlphaShape2D, AlphaShape3D
+from alpha_clustering.cluster import Cluster, ClusterEvaluate
+from alpha_clustering.io_handler import IOHandler
+from alpha_clustering.plot import Plot
+from alpha_clustering.config import Config
 
 def convert_clusters_format_to_sklearn(n_points: int, clusters: list[list[int]]) -> np.array:
     new_clusters = np.zeros(n_points)
