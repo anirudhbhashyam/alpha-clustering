@@ -15,3 +15,4 @@ To use the package, the ideal thing would be to clone the repository locally and
 Additionally a virtual environment maybe setup before installtion. 
 ```
 >>> python -m venv venv
+```
