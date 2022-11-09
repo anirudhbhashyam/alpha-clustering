@@ -88,14 +88,20 @@ class Plot:
 
         fig, ax = self._init_fig(figsize)
 
+        NUM_COLORS = len(clusters)
+
+        cm = plt.get_cmap("rainbow")
+        ax.set_prop_cycle("color", [cm(i / NUM_COLORS) for i in range(NUM_COLORS)])
+
         for label, c in enumerate(clusters):
             ax.scatter(
                 *self.vertices[list(c)].T,
-                label = f"Cluster {label}", 
-                color = f"C{label}",
+                label = f"Cluster {label}",
                 alpha = 0.8,
                 linewidth = 0.0
             )
+
+        # ax.legend(loc = "upper right")
 
         self._post_process_plot(ax, ticks_q)
 
