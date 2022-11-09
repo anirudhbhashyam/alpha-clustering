@@ -71,25 +71,28 @@ class AlphaShape2D(AlphaShape):
             )
             return 0.5 * np.linalg.det(_m) 
 
-        side_a_arr = np.linalg.norm(tessellation_vertices[:, 0, :] - tessellation_vertices[:, 1, :], axis = -1)
-        side_b_arr = np.linalg.norm(tessellation_vertices[:, 1, :] - tessellation_vertices[:, 2, :], axis = -1)
-        side_c_arr = np.linalg.norm(tessellation_vertices[:, 0, :] - tessellation_vertices[:, 2, :], axis = -1)
+        side_a_arr = np.linalg.norm(tessellation_vertices[:, 0, :] - tessellation_vertices[:, 1, :], axis = -1) ** 2
+        side_b_arr = np.linalg.norm(tessellation_vertices[:, 1, :] - tessellation_vertices[:, 2, :], axis = -1) ** 2
+        side_c_arr = np.linalg.norm(tessellation_vertices[:, 0, :] - tessellation_vertices[:, 2, :], axis = -1) ** 2
         triangle_areas = _circum_radius_helper(tessellation_vertices)
 
-        return (side_a_arr * side_b_arr * side_c_arr) / (4 * triangle_areas)
+        return (side_a_arr * side_b_arr * side_c_arr) / (4 * triangle_areas ** 2)
 
     def fit(self) -> None:
         LOGGER.info(
             f"Finding the \u03B1-shape for given point set with \u03B1 = {self.alpha}..."
         )
         if self.alpha == 0:
-            self.alpha_shape = ConvexHull(self.vertices).simplices
-            self.alpha_shape = np.concatenate(
-                [
-                    self.alpha_shape, 
-                    np.zeros(self.alpha_shape.shape[0], dtype = np.int32)[..., None]
-                ],
-                axis = -1
+            simplices = ConvexHull(self.vertices).simplices
+            self.alpha_shape = (
+                    np.concatenate(
+                    [
+                        simplices, 
+                        np.zeros(simplices.shape[0], dtype = np.int32)[..., None]
+                    ],
+                    axis = -1
+                ),
+                simplices
             )
             return        
 
@@ -172,6 +175,7 @@ class AlphaShape3D(AlphaShape):
         _m0134_dets, _m0124_dets, _m0123_dets = _circum_radius_helper(tessellation_vertices)
         num = _m1234_dets ** 2 + _m0234_dets ** 2 + _m0134_dets ** 2 + 4 * _m0124_dets * _m0123_dets
         dem = 2 * abs(_m0124_dets)
+        dem += (dem == 0)
         return np.sqrt(num) / dem
 
     def fit(self) -> None:
@@ -214,10 +218,59 @@ class AlphaShape3D(AlphaShape):
             columns = [dataset]
         )
 
+@dataclass
 class AlphaShapeND(AlphaShape):
-    def fit(self) -> None:
-        self.alpha_shape = alphashape.alphashape(self.vertices, self.alpha)
+    def __post_init__(self) -> None:
+        if self.alpha < 0:
+            raise AlphaValueError(
+                self.alpha, 
+                self.__class__.__name__,
+                LOGGER
+            )
+        self.tesselation = Delaunay(self.vertices, furthest_site = False)
 
+    def fit(self, alpha: float) -> None:
+        self.alpha = alpha
+        if self.alpha == 0:
+            self.alpha_shape = ConvexHull(self.vertices).simplices
+            return
+        LOGGER.info(
+            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
+        )
+        simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
+        simplices_circum_radii = self._circum_radius(simplices)
+        bool_index = (simplices_circum_radii <= (1 / self.alpha))
+        picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
+        picked_simplices = self.tesselation.simplices[picked_simplex_indices]
+        unique_picked_simplices = np.unique(picked_simplices, axis = 0)
+        n = self.vertices.shape[1]
+        self.alpha_shape = [unique_picked_simplices]
+        for _ in range(n, 1, -1):
+            unique_picked_simplices = self._face_filter(unique_picked_simplices)
+            self.alpha_shape.append(unique_picked_simplices)
+        
+
+    @staticmethod
+    def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
+        def _circum_radius_helper(tessellation_vertices: np.ndarray):
+            return [
+                np.linalg.norm(simplex[:, None] - simplex, axis = -1) ** 2
+                for simplex in tessellation_vertices
+            ]
+
+        distances = _circum_radius_helper(tessellation_vertices)
+        circum_radii = list()
+        for dm in distances:
+            m, n = dm.shape
+            cm = np.block([
+                [0,               np.ones((1, n))],
+                [np.ones((m, 1)), dm             ],
+            ])
+            circum_radii.append(
+                np.sqrt(np.linalg.det(dm) / (-2 * np.linalg.det(cm)))
+            )
+        return np.array(circum_radii)
+            
     def get_summary(self, dataset: str) -> pd.DataFrame:
         summary = {
             "Alpha": self.alpha,
@@ -230,7 +283,3 @@ class AlphaShapeND(AlphaShape):
             orient = "index",
             columns = [dataset]
         )
-
-    @staticmethod
-    def _circum_radius(tessellation_vertices: np.ndarray) -> NoReturn:
-        raise NotImplementedError("Not implemented for ND alpha shapes.")
