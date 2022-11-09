@@ -3,14 +3,14 @@ import sys
 import argparse
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+
 import sklearn
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
 CPD = Path(__file__).resolve().parent
-
-sys.path.append(CPD.joinpath("src").as_posix())
 
 from alpha_clustering.alpha_shape import AlphaShape, AlphaShape2D, AlphaShape3D
 from alpha_clustering.cluster import Cluster, ClusterEvaluate
@@ -68,7 +68,7 @@ def find_clusters(data: pd.DataFrame, alpha: float) \
     ac.fit()
 
     kmeans = KMeans(
-        n_clusters = np.random.default_rng().integers(2, 5 + 1, 1)[0],
+        n_clusters = np.default_rng().choice([-2, 2]) + n_true_clusters,
         random_state = 15485863
     )
     clustering = Cluster(
@@ -94,7 +94,7 @@ def create_plots(
     fig1 = plots.alpha_shape(
         alpha_shape,
         (16, 9),
-        points_q = True, 
+        points_q = True,
         ticks_q = True
     )
 
@@ -123,7 +123,7 @@ def evaluate_clusters(
     true_labels: np.array,
     predicted_labels: np.array, 
     other_clustering: tuple[str, np.array],
-) -> None:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     method, other_labels = other_clustering
 
@@ -148,6 +148,8 @@ def evaluate_clusters(
         f"{dataset}_evaluation.tex",
         caption = "Summary of the evaluation of the clustering methods."
     )
+    return df1, df2
+
 
 def summarise_points(
     dataset: str, 
@@ -194,8 +196,14 @@ def main() -> None:
 
     alpha_shape = ac_obj.get_shape
     predicted_clusters = clustering.predict(10)
+    m, communities = clustering._find_communities()
+    # Plot the community clusters.
+    print(f"Communities modularities: {m}")
+    fig, ax = plt.subplots(figsize = (16, 9))
+    for community in communities:
+        ax.scatter(points[list(community), 0], points[list(community), 1], alpha = 0.5)
+    plt.show()
     other_clusters = other_clustering.fit_predict(points)
-    # print(alpha_shape)
 
     create_plots(
         dataset_name, 
