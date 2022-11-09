@@ -19,5 +19,14 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+
 [project.urls]
 "github" = "https://github.com/anirudhbhashyam/alpha-clustering"
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=alpha_clustering"
+testpaths = [
+    "tests"
+]
