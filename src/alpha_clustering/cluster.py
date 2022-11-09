@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 
 import trimesh
 
+import networkx as nx
+
 import numpy as np
 import pandas as pd
 
@@ -67,6 +69,13 @@ class Cluster:
                 if len(component) > cluster_threshold:
                     self.clusters.append(component)
         return self.clusters
+
+    def _find_communities(self) -> list[set[int]]:
+        LOGGER.info("Finding the communities...")
+        graph = nx.Graph(self._adjacency_list)
+        communities = list(nx.algorithms.community.greedy_modularity_communities(graph))
+        m = nx.algorithms.community.modularity(graph, communities)
+        return m, communities
         
     def _bfs(self, source: float) -> set:
         visited = set()
