@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans
 
 CPD = Path(__file__).resolve().parent
 
-from alpha_clustering.alpha_shape import AlphaShape, AlphaShape2D, AlphaShape3D
+from alpha_clustering.alpha_shape import AlphaShape, AlphaShapeND
 from alpha_clustering.cluster import Cluster, ClusterEvaluate
 from alpha_clustering.io_handler import IOHandler
 from alpha_clustering.plot import Plot
@@ -59,16 +59,12 @@ def find_clusters(data: pd.DataFrame, alpha: float) \
     points, _, n_true_clusters = process_data(data)
     points_dimension = points.shape[1]
 
-    if points_dimension == 2:
-        ac = AlphaShape2D(points, alpha)
-    elif points_dimension == 3:
-        ac = AlphaShape3D(points, alpha)
-    else:
-        raise ValueError("Points dimension must be 2 or 3.")
+    ac = AlphaShapeND(points)
     ac.fit()
+    ac.predict(alpha = alpha)
 
     kmeans = KMeans(
-        n_clusters = np.default_rng().choice([-2, 2]) + n_true_clusters,
+        n_clusters = np.random.default_rng().choice([-1, 1]) + n_true_clusters,
         random_state = 15485863
     )
     clustering = Cluster(
@@ -82,7 +78,7 @@ def create_plots(
     dataset: str,
     io: IOHandler,
     points: np.ndarray,
-    alpha_shape: np.ndarray,
+    alpha_shape: list[np.ndarray, ...],
     predicted_clusters: list[list[int]],
     other_clusters: np.array
 ) -> None:
@@ -152,17 +148,18 @@ def evaluate_clusters(
 
 
 def summarise_points(
+    alpha: float,
     dataset: str, 
     io: IOHandler, 
     alpha_obj: AlphaShape,
     other_clustering_obj: sklearn.cluster,
     clustering_obj: Cluster
 ) -> None:
-    df1 = alpha_obj.get_summary(dataset)
+    df1 = alpha_obj.get_summary(alpha, dataset)
     df2 = clustering_obj.get_summary(
         dataset, 
         other_cluster_data = [
-            (f"Number of {other_clustering_obj.__class__.__name__} clusters", len(np.unique(other_clustering_obj.labels_)))
+            (f"Number of {type(other_clustering_obj)} clusters", len(np.unique(other_clustering_obj.labels_)))
         ],
         threshold = 4
     )
@@ -198,11 +195,11 @@ def main() -> None:
     predicted_clusters = clustering.predict(10)
     m, communities = clustering._find_communities()
     # Plot the community clusters.
-    print(f"Communities modularities: {m}")
-    fig, ax = plt.subplots(figsize = (16, 9))
-    for community in communities:
-        ax.scatter(points[list(community), 0], points[list(community), 1], alpha = 0.5)
-    plt.show()
+    # print(f"Communities modularities: {m}")
+    # fig, ax = plt.subplots(figsize = (16, 9))
+    # for community in communities:
+    #     ax.scatter(points[list(community), 0], points[list(community), 1], alpha = 0.5)
+    # plt.show()
     other_clusters = other_clustering.fit_predict(points)
 
     create_plots(
@@ -224,6 +221,7 @@ def main() -> None:
     )
 
     summarise_points(
+        args.alpha,
         dataset_name,
         io,
         ac_obj,
