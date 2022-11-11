@@ -1,8 +1,10 @@
 import time
 
+from functools import wraps
+
 from pathlib import Path
 
-from typing import Iterable
+from typing import Iterable, Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -40,6 +42,14 @@ ALL_DATASETS: dict[str, tuple[float, int]] = {
 class UnequalVarianceError(Exception):
     pass
 
+
+def timing(f: Callable[[Any, ...], Any]) -> Callable[[Any, ...], Any]:
+    @wraps(f)
+    def wrap(*args, **kwargs) -> float:
+        start = time.perf_counter()
+        result = f(*args, **kwargs)
+        return time.perf_counter() - start
+    return wrap
 
 def time_experiment(
     points: np.ndarray,
