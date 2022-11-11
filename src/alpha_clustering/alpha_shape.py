@@ -1,11 +1,6 @@
 import itertools
 
-from dataclasses import dataclass
-from typing import NoReturn
-
 from abc import ABC, abstractmethod
-
-import alphashape
 
 import numpy as np
 import pandas as pd
@@ -17,50 +12,153 @@ from .exceptions import AlphaValueError, NotFittedError
 
 LOGGER = Logger(__name__)
 
-@dataclass
 class AlphaShape(ABC):
+    """
+    An abstract base class for Alpha Shapes. Works like sklearn classes with a fit and predict method.
+    """
     vertices: np.ndarray
-    alpha: float
-    alpha_shape: tuple[np.ndarray] = None
+    tesselation: np.ndarray
+    alpha_shape: list[np.array, ...]
+
+    @abstractmethod
+    def __init__(self, vertices: np.ndarray) -> None:
+        """
+        Initialises an Alpha Shape interface. The should only know about the vertices on which the shape needs to be constructed.
+        """
+        pass
 
     @abstractmethod
     def fit(self) -> None:
+        """
+        The fit method of a class implementing this base class, usually constructs and stores the Delaunay triangulation.
+        """
+        pass
+
+    @abstractmethod
+    def predict(self, alpha: float) -> list[np.array]:
+        """
+        The predict method of a class that implements this base class, constructs the shape by filtering the Dealunay triangulation. 
+        """
         pass
 
     @property
     def n_simplices(self) -> int:
+        """
+        A convenienve property that calculates the total number of simplices generated in an Alpha shape.
+        """
         return sum(len(simplices) for simplices in self.alpha_shape)
 
     @property
     def get_shape(self) -> np.ndarray:
+        """
+        A convenience property that returns the generated Alpha shape checking if it has been constructed.
+        """
         if self.alpha_shape is None:
             raise NotFittedError(
-                self.__class__.__name__,
+                type(self),
                 LOGGER
             )
-        # if len(self.alpha_shape) == 0:
-        #     raise AlphaValueError(
-        #         self.alpha, 
-        #         self.__class__.__name__,
-        #         LOGGER
-        #     )
         return self.alpha_shape
  
     @staticmethod
     @abstractmethod
     def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
+        """
+        A private method that is implemented by a derived class that provides functionality to calculate the circumradii of simplices.
+        """
         pass
 
     def _face_filter(self, simplices: np.ndarray) -> np.ndarray:
+        """
+        A private method that is provided to the derived class to filter down simplices in dimension and provide unqiue sets of the same.
+        """
         k = simplices.shape[1]
         simplex_filter = list(itertools.combinations(list(range(k)), k - 1))
         faces = simplices[:, simplex_filter].reshape(-1, k - 1)
         faces = np.sort(faces, axis = 1)
         return np.unique(faces, axis = 0)
 
+
 class AlphaShape2D(AlphaShape):
+    """
+    A speciliased class that implements `AlphaShape` that constructs 2D Alpha shapes.
+    """
+    def __init__(self, vertices: np.ndarray) -> None:
+        self.vertices = vertices
+        self.tesselation = None
+        self.alpha_shape = None
+
+    def fit(self) -> None:
+        """
+        `AlphaShape2D` does not implement the fit method as the Delaunay triangulation needs to be reconstructed based on the value of :math:`\\alpha`.
+
+        Raises
+        ------
+        NotImplementedError:
+            If the method is called.
+        """
+        raise NotImplementedError(
+            "AlphaShape2D does not support fit method. Please call predict directly."
+        )
+
+    def predict(self, alpha: float) -> None:
+        """
+        Creates the Alpha shape by filtering the Delaunay triangulation.
+
+        Parameters
+        ----------
+        alpha: 
+            Parameterises the constructed shape.
+        """
+        LOGGER.info(
+            f"Finding the \u03B1-shape for given point set with \u03B1 = {alpha}..."
+        )
+        if alpha == 0:
+            simplices = ConvexHull(self.vertices).simplices
+            self.alpha_shape = (
+                    np.concatenate(
+                    [
+                        simplices, 
+                        np.zeros(simplices.shape[0], dtype = np.int32)[..., None]
+                    ],
+                    axis = -1
+                ),
+                simplices
+            )
+            return        
+
+        furthest_site = True if alpha > 0 else False
+        self.tesselation = Delaunay(self.vertices, furthest_site = furthest_site)
+        one_by_alpha  = 1 / alpha
+        simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
+        simplices_circum_radii = self._circum_radius(simplices)
+        bool_index = (simplices_circum_radii >= one_by_alpha) if furthest_site else (simplices_circum_radii <= -one_by_alpha)
+        picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
+        picked_simplices = self.tesselation.simplices[picked_simplex_indices]
+        unique_triangles = np.unique(picked_simplices, axis = 0)
+        unique_edges = self._face_filter(unique_triangles)
+
+        self.alpha_shape = [unique_triangles, unique_edges]
+        
+        LOGGER.info(
+            f"\u03B1-shape with {self.n_simplices} simplices generated."
+        )
+
     @staticmethod
-    def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
+    def _circum_radius(tessellation_vertices: np.ndarray) -> np.array:
+        """
+        Calculates the circum radii of simplices using the areas of triangles.
+
+        Parameters
+        ----------
+        tesselation_vertices:
+            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+
+        Returns
+        -------
+        ``numpy array``:
+            Array containing the circum radii of the `n` simplices.
+        """
         def _circum_radius_helper(tessellation_vertices: np.ndarray) -> np.ndarray:
             _m = np.concatenate(
                 [
@@ -78,49 +176,27 @@ class AlphaShape2D(AlphaShape):
 
         return (side_a_arr * side_b_arr * side_c_arr) / (4 * triangle_areas ** 2)
 
-    def fit(self) -> None:
-        LOGGER.info(
-            f"Finding the \u03B1-shape for given point set with \u03B1 = {self.alpha}..."
-        )
-        if self.alpha == 0:
-            simplices = ConvexHull(self.vertices).simplices
-            self.alpha_shape = (
-                    np.concatenate(
-                    [
-                        simplices, 
-                        np.zeros(simplices.shape[0], dtype = np.int32)[..., None]
-                    ],
-                    axis = -1
-                ),
-                simplices
-            )
-            return        
+    def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
+        """
+        Produces a summary of the generated shape.
 
-        one_by_alpha  = 1 / self.alpha
-        furthest_site = True if self.alpha > 0 else False
-        tessellation  = Delaunay(self.vertices, furthest_site = furthest_site)
-        LOGGER.info(
-            f"Constructed the delaunay triangulation with {furthest_site = } and {tessellation.nsimplex} simplices."
-        )
-        simplices = self.vertices.take(tessellation.simplices, axis = 0)
-        simplices_circum_radii = self._circum_radius(simplices)
-        bool_index = (simplices_circum_radii >= one_by_alpha) if furthest_site else (simplices_circum_radii <= -one_by_alpha)
-        picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
-        picked_simplices = tessellation.simplices[picked_simplex_indices]
-        unique_triangles = np.unique(picked_simplices, axis = 0)
-        unique_edges = self._face_filter(unique_triangles)
+        Parameters
+        ----------
+        alpha:
+            The value used to construct the Alpha shape.
 
-        self.alpha_shape = (unique_triangles, unique_edges)
-        
-        LOGGER.info(
-            f"\u03B1-shape with {self.n_simplices} simplices generated."
-        )
+        dataset:
+            Name of the dataset on which the shape was constructed.
 
-    def get_summary(self, dataset: str) -> pd.DataFrame:
+        Returns
+        -------
+        ``pandas DataFrame``:
+            A dataframe of values.
+        """
         summary = {
-            "Alpha": self.alpha,
+            "Alpha": alpha,
             "Number of vertices": len(self.vertices),
-            "Number of simplices": len(self.alpha_shape),
+            "Number of simplices": self.n_simplices,
         }
 
         return pd.DataFrame.from_dict(
@@ -129,18 +205,76 @@ class AlphaShape2D(AlphaShape):
             columns = [dataset]
         )
         
-@dataclass
+
 class AlphaShape3D(AlphaShape):
-    def __post_init__(self) -> None:
-        if self.alpha < 0:
+    """
+    A speciliased class that implements `AlphaShape` that constructs 3D Alpha shapes.
+    """
+    def __init__(self, vertices: np.ndarray) -> None:
+        self.vertices = vertices
+        self.tesselation = None
+        self.alpha_shape = None
+
+    def fit(self) -> None:
+        """
+        Constructs the Delaunay triangulation of the point cloud.
+        """
+        self.tesselation = Delaunay(self.vertices)
+
+    def predict(self, alpha: float) -> None:
+        """
+        Creates the Alpha shape by filtering the Delaunay triangulation.
+
+        Parameters
+        ----------
+        alpha: 
+            Parameterises the constructed shape.
+        """
+        if alpha < 0:
             raise AlphaValueError(
                 self.alpha, 
-                self.__class__.__name__,
+                type(self),
                 LOGGER
             )
 
+        if alpha == 0:
+            self.alpha_shape = ConvexHull(self.vertices).simplices
+            return
+
+        LOGGER.info(
+            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
+        )
+        simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
+        simplices_circum_radii = self._circum_radius(simplices)
+        bool_index = (simplices_circum_radii <= (1 / alpha))
+        picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
+        picked_simplices = self.tesselation.simplices[picked_simplex_indices]
+
+        unique_triangles = self._face_filter(picked_simplices)
+
+        unique_edges = self._face_filter(unique_triangles)
+
+        self.alpha_shape = [unique_triangles, unique_edges]
+
+        LOGGER.info(
+            f"\u03B1-shape with {self.n_simplices} simplices generated."
+        )
+
     @staticmethod
     def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
+        """
+        Calculates the circum radii of simplices by utilising determinants.
+
+        Parameters
+        ----------
+        tesselation_vertices:
+            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+
+        Returns
+        -------
+        ``numpy array``:
+            Array containing the circum radii of the `n` simplices.
+        """
         def _circum_radius_helper(tessellation_vertices: np.ndarray) -> \
         tuple[
             np.ndarray,
@@ -178,36 +312,25 @@ class AlphaShape3D(AlphaShape):
         dem += (dem == 0)
         return np.sqrt(num) / dem
 
-    def fit(self) -> None:
-        if self.alpha == 0:
-            self.alpha_shape = ConvexHull(self.vertices).simplices
-            return
-        tessellation = Delaunay(self.vertices, furthest_site = False)
-        LOGGER.info(
-            f"Constructed the delaunay triangulation with furthest_site = False and {tessellation.nsimplex} simplices."
-        )
-        simplices = self.vertices.take(tessellation.simplices, axis = 0)
-        simplices_circum_radii = self._circum_radius(simplices)
-        bool_index = (simplices_circum_radii <= (1 / self.alpha))
-        picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
-        picked_simplices = tessellation.simplices[picked_simplex_indices]
+    def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
+        """
+        Produces a summary of the generated shape.
 
-        unique_triangles = self._face_filter(picked_simplices)
+        Parameters
+        ----------
+        alpha:
+            The value used to construct the Alpha shape.
 
-        unique_edges = self._face_filter(unique_triangles)
+        dataset:
+            Name of the dataset on which the shape was constructed.
 
-        self.alpha_shape = (unique_triangles, unique_edges)
-
-        LOGGER.info(
-            f"\u03B1-shape with {self.n_simplices} simplices generated."
-        )
-
-        # Vertices = np.unique(Edges)
-        # return Vertices, Edges, Triangles
-
-    def get_summary(self, dataset: str) -> pd.DataFrame:
+        Returns
+        -------
+        ``pandas DataFrame``:
+            A dataframe of values.
+        """
         summary = {
-            "Alpha": self.alpha,
+            "Alpha": alpha,
             "Number of vertices": len(self.vertices),
             "Number of simplices": self.n_simplices,
         }
@@ -218,28 +341,47 @@ class AlphaShape3D(AlphaShape):
             columns = [dataset]
         )
 
-@dataclass
 class AlphaShapeND(AlphaShape):
-    def __post_init__(self) -> None:
-        if self.alpha < 0:
-            raise AlphaValueError(
-                self.alpha, 
-                self.__class__.__name__,
-                LOGGER
-            )
-        self.tesselation = Delaunay(self.vertices, furthest_site = False)
+    """
+    A specialised interface that implements `AlphaShape` used to construct `n`D shapes, where `n > 1`.
+    """
+    def __init__(self, vertices: np.ndarray) -> None:
+        self.vertices = vertices
+        self.alpha_shape = None
+        self.tesselation = None
 
-    def fit(self, alpha: float) -> None:
-        self.alpha = alpha
-        if self.alpha == 0:
-            self.alpha_shape = ConvexHull(self.vertices).simplices
-            return
+    def fit(self) -> None:
+        """
+        Constructs the Delaunay triangulation of the point cloud.
+        """
+        self.tesselation = Delaunay(self.vertices)
         LOGGER.info(
             f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
         )
+
+    def predict(self, alpha: float) -> None:
+        """
+        Creates the Alpha shape by filtering the Delaunay triangulation.
+
+        Parameters
+        ----------
+        alpha: 
+            Parameterises the constructed shape.
+        """
+        if alpha < 0:
+            raise AlphaValueError(
+                alpha, 
+                type(self),
+                LOGGER
+            )
+
+        if alpha == 0:
+            self.alpha_shape = ConvexHull(self.vertices).simplices
+            return
+        one_by_alpha = 1 / alpha
         simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
         simplices_circum_radii = self._circum_radius(simplices)
-        bool_index = (simplices_circum_radii <= (1 / self.alpha))
+        bool_index = (simplices_circum_radii <= one_by_alpha)
         picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
         picked_simplices = self.tesselation.simplices[picked_simplex_indices]
         unique_picked_simplices = np.unique(picked_simplices, axis = 0)
@@ -252,6 +394,19 @@ class AlphaShapeND(AlphaShape):
 
     @staticmethod
     def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
+        """
+        Calculates the circum radii of simplices by utilising determinants.
+
+        Parameters
+        ----------
+        tesselation_vertices:
+            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+
+        Returns
+        -------
+        ``numpy array``:
+            Array containing the circum radii of the `n` simplices.
+        """
         def _circum_radius_helper(tessellation_vertices: np.ndarray):
             return [
                 np.linalg.norm(simplex[:, None] - simplex, axis = -1) ** 2
@@ -271,11 +426,27 @@ class AlphaShapeND(AlphaShape):
             )
         return np.array(circum_radii)
             
-    def get_summary(self, dataset: str) -> pd.DataFrame:
+    def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
+        """
+        Produces a summary of the generated shape.
+
+        Parameters
+        ----------
+        alpha:
+            The value used to construct the Alpha shape.
+
+        dataset:
+            Name of the dataset on which the shape was constructed.
+
+        Returns
+        -------
+        ``pandas DataFrame``:
+            A dataframe of values.
+        """
         summary = {
-            "Alpha": self.alpha,
+            "Alpha": alpha,
             "Number of vertices": len(self.vertices),
-            "Number of simplices": len(self.alpha_shape),
+            "Number of simplices": self.n_simplices,
         }
 
         return pd.DataFrame.from_dict(
