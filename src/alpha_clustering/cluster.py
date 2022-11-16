@@ -3,9 +3,7 @@ from dataclasses import dataclass, field
 
 from typing import Iterator
 
-import trimesh
-
-import networkx as nx
+# import networkx as nx
 
 import numpy as np
 import pandas as pd
@@ -37,10 +35,7 @@ class Cluster:
         Constructs an intermediary data structure from the Alpha shape.
         """
         LOGGER.info("Fitting the cluster model...")
-        if isinstance(self.shape, trimesh.Trimesh):
-            edges = trimesh.geometry.faces_to_edges(self.shape.faces)
-        else:
-            edges = self.shape[-1]
+        edges = self.shape[-1]
 
         for v1, v2 in edges:
             self._adjacency_list[v1].add(v2)
@@ -148,9 +143,9 @@ class Cluster:
         Parameters
         ----------
         dataset: 
-            The name of the dataset that is has been clustered.
+            The name of the dataset that has been clustered.
         other_cluster_data: 
-            Key value pairs of data of any other clustering method that has been used.
+            Key value pairs of metadata of any other clustering method that has been used.
         threshold:
             The clustering threshold used for alpha clustering.
         """
@@ -171,7 +166,7 @@ class Cluster:
 @dataclass
 class ClusterEvaluate:
     """
-    A simple class that evaluates cluster labels using different metrics.
+    A simple class that evaluates cluster labels using different metrics. Should be used to compare the performance a clustering method. 
     """
     data: np.ndarray
     true_clusters: np.array
