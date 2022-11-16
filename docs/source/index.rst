@@ -10,9 +10,26 @@ Welcome to Alpha Clustering's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+Modules
+=======
+
+Alpha Shape
+-----------
+
 .. automodule:: alpha_clustering.alpha_shape
    :members:
+   :private-members:
 
+Clustering
+----------
+
+.. automodule:: alpha_clustering.cluster
+   :members:
+   :private-members:
+
+
+Usage 
+=====
 
 
 Indices and tables
