@@ -4,7 +4,9 @@ from typing import NoReturn
 
 import pytest
 
-from alpha_clustering.alpha_shape import AlphaShape2D, AlphaShape3D
+import numpy as np
+
+from alpha_clustering.alpha_shape import AlphaShape2D, AlphaShape3D, AlphaShapeND
 from alpha_clustering.config import Config
 from alpha_clustering.io_handler import IOHandler
 
@@ -26,16 +28,16 @@ TEST_IO = IOHandler(
 @pytest.mark.parametrize(
     ("data_file", "alpha", "expected_simplices"),
     [
-        ("test.arff", -0.4556, 14320),
-        ("test_2.arff", -0.1054, 10966),
-        ("test_3.arff", -185.1124, 2898),
+        ("test.arff", -0.4556, 12575),
+        ("test_2.arff", -0.1054, 160),
+        ("test_3.arff", -185.1124, 3770),
     ]
 )
 def test_alpha_shape_2d(data_file: Path, alpha: float, expected_simplices: int) -> NoReturn:
     test_data = TEST_IO.load_point_cloud(data_file)
     points = test_data.iloc[:, : -1].to_numpy()
-    ac = AlphaShape2D(points, alpha)
-    ac.fit()
+    ac = AlphaShape2D(points)
+    ac.predict(alpha)
     assert ac.n_simplices == expected_simplices
 
 
@@ -49,6 +51,28 @@ def test_alpha_shape_2d(data_file: Path, alpha: float, expected_simplices: int) 
 def test_alpha_shape_3d(data_file: Path, alpha: float, expected_simplices: int) -> NoReturn:
     test_data = TEST_IO.load_point_cloud(data_file)
     points = test_data.iloc[:, : -1].to_numpy()
-    ac = AlphaShape3D(points, alpha)
+    ac = AlphaShape3D(points)
     ac.fit()
+    ac.predict(alpha)
     assert ac.n_simplices == expected_simplices
+    
+
+@pytest.mark.parametrize(
+    ("vertices", "alpha", "expected_simplices"),
+    [
+        (
+            np.array(
+                [[1, 0, 0], [1, 0, 1], [1, 1, 1], [0, 0, 1]],
+                dtype = np.float32
+            ),
+            1.00,
+            11
+        )
+    ]
+)
+def test_alpha_shape_nd(vertices: np.ndarray, alpha: float, expected_simplices: int) -> NoReturn:
+    ac = AlphaShapeND(vertices)
+    ac.fit()
+    ac.predict(alpha)
+    assert ac.n_simplices == expected_simplices
+    
