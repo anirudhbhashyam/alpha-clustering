@@ -18,12 +18,12 @@ class AlphaShape(ABC):
     """
     vertices: np.ndarray
     tesselation: np.ndarray
-    alpha_shape: list[np.array, ...]
+    alpha_shape: list[np.array]
 
     @abstractmethod
     def __init__(self, vertices: np.ndarray) -> None:
         """
-        Initialises an Alpha Shape interface. The should only know about the vertices on which the shape needs to be constructed.
+        Initialises an Alpha Shape interface. The implementing interface should only receive the vertices the shape needs to be constructed during initialisation.
         """
         pass
 
@@ -44,7 +44,7 @@ class AlphaShape(ABC):
     @property
     def n_simplices(self) -> int:
         """
-        A convenienve property that calculates the total number of simplices generated in an Alpha shape.
+        A convenience property that calculates the total number of simplices generated in an Alpha shape.
         """
         return sum(len(simplices) for simplices in self.alpha_shape)
 
@@ -81,7 +81,7 @@ class AlphaShape(ABC):
 
 class AlphaShape2D(AlphaShape):
     """
-    A speciliased class that implements `AlphaShape` that constructs 2D Alpha shapes.
+    A specialised class that implements `AlphaShape` that constructs 2D Alpha shapes.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
@@ -90,7 +90,7 @@ class AlphaShape2D(AlphaShape):
 
     def fit(self) -> None:
         """
-        `AlphaShape2D` does not implement the fit method as the Delaunay triangulation needs to be reconstructed based on the value of :math:`\\alpha`.
+        `AlphaShape2D` does not implement the fit method as the Delaunay triangulation needs to be reconstructed based on the value of `alpha`.
 
         Raises
         ------
@@ -152,7 +152,7 @@ class AlphaShape2D(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -208,7 +208,7 @@ class AlphaShape2D(AlphaShape):
 
 class AlphaShape3D(AlphaShape):
     """
-    A speciliased class that implements `AlphaShape` that constructs 3D Alpha shapes.
+    A specialised class that implements `AlphaShape` that constructs 3D Alpha shapes.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
@@ -268,7 +268,7 @@ class AlphaShape3D(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -343,7 +343,7 @@ class AlphaShape3D(AlphaShape):
 
 class AlphaShapeND(AlphaShape):
     """
-    A specialised interface that implements `AlphaShape` used to construct `n`D shapes, where `n > 1`.
+    A specialised interface that implements `AlphaShape` used to construct `n` D shapes, where :math:`n > 1`.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
@@ -391,6 +391,10 @@ class AlphaShapeND(AlphaShape):
             unique_picked_simplices = self._face_filter(unique_picked_simplices)
             self.alpha_shape.append(unique_picked_simplices)
         
+        LOGGER.info(
+            f"\u03B1-shape with {self.n_simplices} simplices generated."
+        )
+        
 
     @staticmethod
     def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
@@ -400,7 +404,7 @@ class AlphaShapeND(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape :math:`(n, k + 1, k)`. This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -424,7 +428,7 @@ class AlphaShapeND(AlphaShape):
             circum_radii.append(
                 np.sqrt(np.linalg.det(dm) / (-2 * np.linalg.det(cm)))
             )
-        return np.array(circum_radii)
+        return np.array(circum_radii, dtype = np.float64)
             
     def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
         """
