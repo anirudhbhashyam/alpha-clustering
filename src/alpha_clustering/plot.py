@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 
-import trimesh
 import numpy as np
 
 import seaborn as sns
@@ -47,10 +46,12 @@ class Plot:
     ) -> plt.Figure:
         LOGGER.info("Visualizing \u03B1-shape...")
 
-        if isinstance(shape, trimesh.Trimesh):
-            triangles = shape.faces
-        else:
-            triangles = shape[0]
+        
+        # Find the triangles in the shape.
+        for simplices in shape:
+            if simplices.shape[1] == 3:
+                triangles = simplices
+                break
 
         fig, ax = self._init_fig(figsize)
 
