@@ -354,6 +354,7 @@ class AlphaShapeND(AlphaShape):
         """
         Constructs the Delaunay triangulation of the point cloud.
         """
+        # Check the tessellation for degenerate simplices and remove them.
         self.tesselation = Delaunay(self.vertices)
         LOGGER.info(
             f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
