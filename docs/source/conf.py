@@ -20,12 +20,12 @@ sys.path.append(os.path.abspath(
 
 # -- Project information -----------------------------------------------------
 
-project = 'Alpha Clustering'
-copyright = '2022, Anirudh Bhashyam'
-author = 'Anirudh Bhashyam'
+project = "Alpha Clustering"
+copyright = "2022, Anirudh Bhashyam"
+author = "Anirudh Bhashyam"
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,7 +39,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
