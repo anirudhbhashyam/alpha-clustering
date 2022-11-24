@@ -18,17 +18,8 @@ from alpha_clustering.io_handler import IOHandler
 from alpha_clustering.plot import Plot
 from alpha_clustering.config import Config
 
-def convert_clusters_format_to_sklearn(n_points: int, clusters: list[list[int]]) -> np.array:
-    new_clusters = np.zeros(n_points)
-    for i, cluster in enumerate(clusters):
-        new_clusters[list(cluster)] = i
-    return np.sort(new_clusters)
+from utils import *
 
-def convert_sklearn_format_to_clusters(clusters: np.array) -> list[list[int]]:
-    new_clusters = list()
-    for i in np.unique(clusters):
-        new_clusters.append(np.where(clusters == i)[0])
-    return new_clusters
 
 def process_data(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, int]:
     points = df.iloc[:, : -1].to_numpy()
@@ -78,7 +69,7 @@ def create_plots(
     dataset: str,
     io: IOHandler,
     points: np.ndarray,
-    alpha_shape: list[np.ndarray, ...],
+    alpha_shape: list[np.ndarray],
     predicted_clusters: list[list[int]],
     other_clusters: np.array
 ) -> None:
@@ -193,7 +184,7 @@ def main() -> None:
 
     alpha_shape = ac_obj.get_shape
     predicted_clusters = clustering.predict(10)
-    m, communities = clustering._find_communities()
+    # m, communities = clustering._find_communities()
     # Plot the community clusters.
     # print(f"Communities modularities: {m}")
     # fig, ax = plt.subplots(figsize = (16, 9))
