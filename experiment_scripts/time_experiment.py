@@ -114,31 +114,49 @@ def main() -> int:
         if dataset_name == "tesseract.arff":
             points = data.iloc[:, : -2].to_numpy()
         alpha_time, kmeans_time, n_clusters_alpha, n_clusters_kmeans = time_experiment(points, alpha, k_means, 10)
+        dataset_name = dataset_name.replace(".arff", "")
+        dataset_name = dataset_name.replace("_", "-")
         df = pd.DataFrame(
             {
-                "alpha clustering time (10 run average)": alpha_time,
-                "kmeans clustering time (10 run average)": kmeans_time,
-                "# predicted alpha clusters": int(n_clusters_alpha),
-                "# predicted kmeans clusters": int(n_clusters_kmeans),
-                "# ground truth clusters": int(data.iloc[:, -1].nunique())
+                "alpha clustering time": alpha_time,
+                "kmeans clustering time": kmeans_time,
+                "predicted alpha clusters": n_clusters_alpha,
+                "predicted kmeans clusters": n_clusters_kmeans,
+                "ground truth clusters": data.iloc[:, -1].nunique()
             },
             index = [dataset_name],
-        ) 
+        )
+        df.astype({
+            "predicted alpha clusters": int,
+            "predicted kmeans clusters": int,
+            "ground truth clusters": int
+        }) 
         dfs.append(df)
 
     df = pd.concat(dfs)
 
+    time_results = df.iloc[:, : 2]
+    cluster_results = df.iloc[:, 2 :]
+
     io_handler.write_results(
         dataset = "all",
-        results = dfs,
+        results = [time_results],
         save_name = "performance_results.tex",
         caption = "Performance results for all datasets.",
-        join_axis = 0
+        join_axis = 0,
+    )
+
+    io_handler.write_results(
+        dataset = "all",
+        results = [cluster_results],
+        save_name = "cluster_results.tex",
+        caption = "Cluster results for all datasets.",
+        join_axis = 0,
     )
 
     t_stat, p_value = get_significance(
-        df["alpha clustering time (10 run average)"],
-        df["kmeans clustering time (10 run average)"]
+        df["alpha clustering time"],
+        df["kmeans clustering time"]
     )
     print(f"t-stat: {t_stat}, p-value: {p_value}")
 
