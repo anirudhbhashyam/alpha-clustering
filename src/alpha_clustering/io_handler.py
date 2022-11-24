@@ -57,7 +57,9 @@ class IOHandler:
         results: list[pd.DataFrame],
         save_name: str,
         caption: str,
-        join_axis: int = 1
+        join_axis: int = 1,
+        position: str = "!htbp",
+        column_format: str = None
     ) -> None:
         write_dir = self._create_dir(Path("metrics") / f"{dataset}-evaluation")
         caption_style = {
@@ -78,13 +80,18 @@ class IOHandler:
                 .set_caption(caption)\
                 .set_table_styles([caption_style])\
                 .to_latex(
-                    position = "H",
+                    column_format = column_format,
+                    position = position,
                     position_float = "centering",
                     hrules = True,
                     caption = caption,
                     convert_css = True
                 )
             ) 
+    
+    @property
+    def get_data_dir(self) -> Path:
+        return self.data_dir
     
     def _create_dir(self, name: str | Path) -> Path:
         dir_to_create = Path(self.save_dir, name)
