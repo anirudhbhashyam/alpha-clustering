@@ -39,18 +39,18 @@ class Plot:
             raise ValueError("The vertices must be a 2D array of points.")
         self.dimension = self.vertices.shape[1]
 
-    def alpha_shape(
+    def alpha_complex(
         self,
-        shape: np.ndarray,
+        complex: np.ndarray,
         figsize: tuple[float, float] = (16, 9),
         points_q: bool = True,
         ticks_q: bool = True,
     ) -> plt.Figure:
-        LOGGER.info("Visualizing \u03B1-shape...")
+        LOGGER.info("Visualizing \u03B1-complex...")
 
         
-        # Find the triangles in the shape.
-        for simplices in shape:
+        # Find the triangles in the complex.
+        for simplices in complex:
             if simplices.shape[1] == 3:
                 triangles = simplices
                 break
