@@ -202,7 +202,7 @@ class AlphaShape2D(AlphaShape):
         return pd.DataFrame.from_dict(
             summary,
             orient = "index",
-            columns = [dataset]
+            columns = [f"Dataset: {dataset}"]
         )
         
 
@@ -338,7 +338,7 @@ class AlphaShape3D(AlphaShape):
         return pd.DataFrame.from_dict(
             summary,
             orient = "index",
-            columns = [dataset]
+            columns = [f"Dataset: {dataset}"]
         )
 
 class AlphaShapeND(AlphaShape):
@@ -457,5 +457,5 @@ class AlphaShapeND(AlphaShape):
         return pd.DataFrame.from_dict(
             summary,
             orient = "index",
-            columns = [dataset]
+            columns = [f"Dataset: {dataset}"]
         )

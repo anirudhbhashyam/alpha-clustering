@@ -11,11 +11,13 @@ from .logger import Logger
 LOGGER = Logger(__name__)
 
 COLOR_PALETTE = [
-    "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
-    "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080",
-    "#ffffff", "#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff", "#800000", "#800080",
-    "#008000", "#008080", "#000080", "#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
-    "#800000", "#800080", "#008000", "#008080", "#000080", "#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00",
+    "#e6194b", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
+    "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", 
+    "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080", 
+    "#ffffff", "#000000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", 
+    "#ff00ff", "#800000", "#800080", "#008000", "#008080", "#000080", 
+    "#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", 
+    "#ff00ff", "#800000", "#800080", "#008000", "#000080", "#0000ff"
 ]
 
 plt.rcParams["axes.edgecolor"] = (0.33, 0.32, 0.29)
@@ -91,8 +93,8 @@ class Plot:
 
         NUM_COLORS = len(clusters)
 
-        cm = plt.get_cmap("rainbow")
-        ax.set_prop_cycle("color", [cm(i / NUM_COLORS) for i in range(NUM_COLORS)])
+        # cm = plt.get_cmap("gist_rainbow")
+        ax.set_prop_cycle("color", [COLOR_PALETTE[i] for i in range(NUM_COLORS)])
 
         for label, c in enumerate(clusters):
             ax.scatter(
@@ -162,6 +164,6 @@ class Plot:
 
     def _init_fig(self, figsize: tuple[float, float] = (16, 9)) -> \
     tuple[plt.Figure, plt.Axes]:
-        fig = plt.figure(figsize = figsize)
+        fig = plt.figure(figsize = figsize, dpi = 300)
         ax = fig.add_subplot(111, projection = "3d" if self.dimension == 3 else None)
         return fig, ax

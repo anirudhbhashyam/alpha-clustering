@@ -158,7 +158,8 @@ def main() -> int:
         [varying_density_df],
         f"{dataset_varying_density}_evaluation.tex",
         caption = "Evaluation of the alpha shape on a varying density of points.",
-        join_axis = 0
+        join_axis = 0,
+        label = "TAB:VaryingDensityResults"
     )
 
     io_handler.write_results(
@@ -166,6 +167,7 @@ def main() -> int:
         [lr_df],
         f"{dataset_varying_density}_linear_regression.tex",
         caption = "Linear regression of the number of simplices and the density of points.",
+        label = "TAB:VaryingDensityRegressionResults",
         join_axis = 0
     )
 
@@ -174,6 +176,7 @@ def main() -> int:
         [varying_alpha_df],
         f"{dataset_varying_alpha}_evaluation.tex",
         caption = "Evaluation of the alpha shape on a varying alpha.",
+        label = "TAB:VaryingAlphaResults",
         join_axis = 0
     )
     

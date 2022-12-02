@@ -28,7 +28,7 @@ ALL_DATASETS: dict[str, tuple[float, int]] = {
     "test.arff": (0.499, 9),
     "test_2.arff": (0.105, 8),
     "test_3.arff": (187.719, 6),
-    "bio-protein.arff": (0.005, 5),
+    "bio-protein.arff": (0.005, 4),
     "hypercube.arff": (4.37575, 8),
     "chainlink.arff": (2.500, 2),
     "golf-ball.arff": (0.624, 1),
@@ -118,8 +118,8 @@ def main() -> int:
         dataset_name = dataset_name.replace("_", "-")
         df = pd.DataFrame(
             {
-                "alpha clustering time": alpha_time,
-                "kmeans clustering time": kmeans_time,
+                "AC Time (s)": alpha_time,
+                "KM Time (s)": kmeans_time,
                 "predicted alpha clusters": n_clusters_alpha,
                 "predicted kmeans clusters": n_clusters_kmeans,
                 "ground truth clusters": data.iloc[:, -1].nunique()
@@ -142,8 +142,9 @@ def main() -> int:
         dataset = "all",
         results = [time_results],
         save_name = "performance_results.tex",
-        caption = "Performance results for all datasets.",
+        caption = "Performance results for all datasets. AC: Alpha Clustering, KM: KMeans clustering.",
         join_axis = 0,
+        label = "TAB:PerformanceResultsI",
     )
 
     io_handler.write_results(
@@ -155,8 +156,8 @@ def main() -> int:
     )
 
     t_stat, p_value = get_significance(
-        df["alpha clustering time"],
-        df["kmeans clustering time"]
+        df["AC Time (s)"],
+        df["KM Time (s)"]
     )
     print(f"t-stat: {t_stat}, p-value: {p_value}")
 

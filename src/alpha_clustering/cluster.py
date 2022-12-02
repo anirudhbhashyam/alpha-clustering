@@ -160,7 +160,7 @@ class Cluster:
         return pd.DataFrame.from_dict(
             summary, 
             orient = "index",
-            columns = [dataset]
+            columns = [f"Dataset: {dataset}"]
         )
 
 @dataclass

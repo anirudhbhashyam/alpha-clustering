@@ -59,7 +59,8 @@ class IOHandler:
         caption: str,
         join_axis: int = 1,
         position: str = "!htbp",
-        column_format: str = None
+        column_format: str = None,
+        label = None
     ) -> None:
         write_dir = self._create_dir(Path("metrics") / f"{dataset}-evaluation")
         caption_style = {
@@ -85,7 +86,8 @@ class IOHandler:
                     position_float = "centering",
                     hrules = True,
                     caption = caption,
-                    convert_css = True
+                    convert_css = True,
+                    label = label
                 )
             ) 
     

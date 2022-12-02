@@ -24,7 +24,7 @@ from utils import *
 def process_data(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, int]:
     points = df.iloc[:, : -1].to_numpy()
     all_labels = df.iloc[:, -1].apply(lambda x: int(x))
-    n_true_clusters = len(all_labels.unique())
+    n_true_clusters = 4
     return points, all_labels, n_true_clusters
 
 def process_args() -> argparse.Namespace:
@@ -55,7 +55,7 @@ def find_clusters(data: pd.DataFrame, alpha: float) \
     ac.predict(alpha = alpha)
 
     kmeans = KMeans(
-        n_clusters = np.random.default_rng().choice([-1, 1]) + n_true_clusters,
+        n_clusters = n_true_clusters,
         random_state = 15485863
     )
     clustering = Cluster(
@@ -133,7 +133,8 @@ def evaluate_clusters(
         dataset,
         [df1, df2],
         f"{dataset}_evaluation.tex",
-        caption = "Summary of the evaluation of the clustering methods."
+        caption = "Summary of the evaluation of the clustering methods.",
+        label = f"TAB:{dataset.capitalize()}Evaluation"
     )
     return df1, df2
 
@@ -149,17 +150,19 @@ def summarise_points(
     df1 = alpha_obj.get_summary(alpha, dataset)
     df2 = clustering_obj.get_summary(
         dataset, 
-        other_cluster_data = [
-            (f"Number of {type(other_clustering_obj)} clusters", len(np.unique(other_clustering_obj.labels_)))
-        ],
+        other_cluster_data = [(
+            f"Number of {other_clustering_obj.__class__.__name__} clusters", 
+            len(np.unique(other_clustering_obj.labels_))
+        )],
         threshold = 4
     )
     io.write_results(
         dataset,
         [df1, df2],
         f"{dataset}_summary.tex",
-        caption = "Summary of the dataset and the alpha shape.",
-        join_axis = 0
+        caption = f"Summary of the dataset {dataset} and its alpha shape.",
+        join_axis = 0,
+        label = f"TAB:{dataset.capitalize()}Summary"
     )
 
 def main() -> None:
@@ -184,13 +187,7 @@ def main() -> None:
 
     alpha_shape = ac_obj.get_shape
     predicted_clusters = clustering.predict(10)
-    # m, communities = clustering._find_communities()
-    # Plot the community clusters.
-    # print(f"Communities modularities: {m}")
-    # fig, ax = plt.subplots(figsize = (16, 9))
-    # for community in communities:
-    #     ax.scatter(points[list(community), 0], points[list(community), 1], alpha = 0.5)
-    # plt.show()
+
     other_clusters = other_clustering.fit_predict(points)
 
     create_plots(
