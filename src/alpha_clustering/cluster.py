@@ -18,7 +18,7 @@ LOGGER = Logger(__name__)
 @dataclass
 class Cluster:
     """
-    Custom interface to cluster data using an Alpha shape.
+    Custom interface to cluster data using an Alpha complex.
     """
     shape: list[np.ndarray]
 
@@ -32,7 +32,7 @@ class Cluster:
     
     def fit(self) -> None:
         """
-        Constructs an intermediary data structure from the Alpha shape.
+        Constructs an intermediary data structure from the Alpha complex.
         """
         LOGGER.info("Fitting the cluster model...")
         edges = self.shape[-1]
@@ -55,7 +55,7 @@ class Cluster:
         ``Iterator[set[int]]``:
             Iterable that yields clusters.
         """
-        LOGGER.info("Predicting the clusters using the \u03B1-shape...(iterating)")
+        LOGGER.info("Predicting the clusters using the \u03B1-complex...(iterating)")
         if len(self._adjacency_list) == 0:
             raise NotFittedError(
                 self.__class__.__name__,
@@ -83,7 +83,7 @@ class Cluster:
         ``list[list[int]]``:
             A list of clusters. Each sublist is a cluster containing the indices of the vertices.
         """
-        LOGGER.info("Predicting the clusters using the \u03B1-shape...")
+        LOGGER.info("Predicting the clusters using the \u03B1-complex...")
         # if len(self._adjacency_list) == 0:
         #     raise NotFittedError(
         #         self.__class__.__name__,
