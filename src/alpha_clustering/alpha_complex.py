@@ -72,9 +72,9 @@ class AlphaComplex(ABC):
         """
         A private method that is provided to the derived class to filter down simplices in dimension and provide unique sets of the same.
         """
-        k = simplices.complex[1]
+        k = simplices.shape[1]
         simplex_filter = list(itertools.combinations(list(range(k)), k - 1))
-        faces = simplices[:, simplex_filter].recomplex(-1, k - 1)
+        faces = simplices[:, simplex_filter].reshape(-1, k - 1)
         faces = np.sort(faces, axis = 1)
         return np.unique(faces, axis = 0)
 
@@ -125,10 +125,12 @@ class AlphaComplex2D(AlphaComplex):
                 ),
                 simplices
             )
-            return        
-
+            return   
         furthest_site = True if alpha > 0 else False
         self.tesselation = Delaunay(self.vertices, furthest_site = furthest_site)
+        LOGGER.info(
+            f"Constructed the delaunay triangulation with furthest_site = False and {len(self.tesselation.simplices)} simplices."
+        )     
         one_by_alpha  = 1 / alpha
         simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
         simplices_circum_radii = self._circum_radius(simplices)
@@ -163,7 +165,7 @@ class AlphaComplex2D(AlphaComplex):
             _m = np.concatenate(
                 [
                     tessellation_vertices, 
-                    np.ones(tessellation_vertices.complex[: 2] + (1, ))
+                    np.ones(tessellation_vertices.shape[: 2] + (1, ))
                 ],
                 axis = -1
             )
@@ -220,6 +222,9 @@ class AlphaComplex3D(AlphaComplex):
         Constructs the Delaunay triangulation of the point cloud.
         """
         self.tesselation = Delaunay(self.vertices)
+        LOGGER.info(
+            f"Constructed the delaunay triangulation with furthest_site = False and {len(self.tesselation.simplices)} simplices."
+        )
 
     def predict(self, alpha: float) -> None:
         """
@@ -241,9 +246,6 @@ class AlphaComplex3D(AlphaComplex):
             self.alpha_complex = ConvexHull(self.vertices).simplices
             return
 
-        LOGGER.info(
-            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
-        )
         simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
         simplices_circum_radii = self._circum_radius(simplices)
         bool_index = (simplices_circum_radii <= (1 / alpha))
@@ -288,7 +290,7 @@ class AlphaComplex3D(AlphaComplex):
                 [
                     tessellation_vertices, 
                     vertex_norms,
-                    np.ones(tessellation_vertices.complex[: -1] + (1, ))
+                    np.ones(tessellation_vertices.shape[: -1] + (1, ))
                 ],
                 axis = -1
             )
@@ -357,7 +359,7 @@ class AlphaComplexND(AlphaComplex):
         # Check the tessellation for degenerate simplices and remove them.
         self.tesselation = Delaunay(self.vertices)
         LOGGER.info(
-            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.n_simplices} simplices."
+            f"Constructed the delaunay triangulation with furthest_site = False and {len(self.tesselation.simplices)} simplices."
         )
 
     def predict(self, alpha: float) -> None:

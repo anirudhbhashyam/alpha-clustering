@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans
 
 CPD = Path(__file__).resolve().parent
 
-from alpha_clustering.alpha_shape import AlphaShape, AlphaShapeND
+from alpha_clustering.alpha_complex import AlphaComplex, AlphaComplexND
 from alpha_clustering.cluster import Cluster, ClusterEvaluate
 from alpha_clustering.io_handler import IOHandler
 from alpha_clustering.plot import Plot
@@ -29,7 +29,7 @@ def process_data(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, int]:
 
 def process_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description = "Cluster data using alpha shape clustering."
+        description = "Cluster data using alpha complex clustering."
     )
     parser.add_argument(
         "dataset",
@@ -44,13 +44,13 @@ def process_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def find_clusters(data: pd.DataFrame, alpha: float) \
-    -> tuple[np.ndarray, AlphaShape, Cluster, sklearn.cluster]:
+    -> tuple[np.ndarray, AlphaComplex, Cluster, sklearn.cluster]:
 
     
     points, _, n_true_clusters = process_data(data)
     points_dimension = points.shape[1]
 
-    ac = AlphaShapeND(points)
+    ac = AlphaComplexND(points)
     ac.fit()
     ac.predict(alpha = alpha)
 
@@ -59,7 +59,7 @@ def find_clusters(data: pd.DataFrame, alpha: float) \
         random_state = 15485863
     )
     clustering = Cluster(
-        shape = ac.get_shape
+        shape = ac.get_complex
     )
     clustering.fit()
 
@@ -69,7 +69,7 @@ def create_plots(
     dataset: str,
     io: IOHandler,
     points: np.ndarray,
-    alpha_shape: list[np.ndarray],
+    alpha_complex: list[np.ndarray],
     predicted_clusters: list[list[int]],
     other_clusters: np.array
 ) -> None:
@@ -78,8 +78,8 @@ def create_plots(
 
     fig0 = plots.points_scatter()
 
-    fig1 = plots.alpha_shape(
-        alpha_shape,
+    fig1 = plots.alpha_complex(
+        alpha_complex,
         (16, 9),
         points_q = True,
         ticks_q = True
@@ -100,7 +100,7 @@ def create_plots(
     io.write_figs(
         dataset,
         [fig0, fig1, fig2, fig3],
-        ["scatter.png", "alpha_shape.png", "alpha_shape_clusters.png", "kmeans_clusters.png"]
+        ["scatter.png", "alpha_complex.png", "alpha_complex_clusters.png", "kmeans_clusters.png"]
     )    
 
 def evaluate_clusters(
@@ -126,7 +126,7 @@ def evaluate_clusters(
         other_labels
     )
     
-    df1 = cl_eval_one.get_results(method = "alpha shape clustering")
+    df1 = cl_eval_one.get_results(method = "alpha complex clustering")
     df2 = cl_eval_two.get_results(method = f"{method} clustering")
 
     io.write_results(
@@ -143,7 +143,7 @@ def summarise_points(
     alpha: float,
     dataset: str, 
     io: IOHandler, 
-    alpha_obj: AlphaShape,
+    alpha_obj: AlphaComplex,
     other_clustering_obj: sklearn.cluster,
     clustering_obj: Cluster
 ) -> None:
@@ -160,7 +160,7 @@ def summarise_points(
         dataset,
         [df1, df2],
         f"{dataset}_summary.tex",
-        caption = f"Summary of the dataset {dataset} and its alpha shape.",
+        caption = f"Summary of the dataset {dataset} and its alpha complex.",
         join_axis = 0,
         label = f"TAB:{dataset.capitalize()}Summary"
     )
@@ -185,7 +185,7 @@ def main() -> None:
 
     points, ac_obj, clustering, other_clustering = find_clusters(data, args.alpha)
 
-    alpha_shape = ac_obj.get_shape
+    alpha_complex = ac_obj.get_complex
     predicted_clusters = clustering.predict(10)
 
     other_clusters = other_clustering.fit_predict(points)
@@ -194,7 +194,7 @@ def main() -> None:
         dataset_name, 
         io, 
         points, 
-        alpha_shape,
+        alpha_complex,
         predicted_clusters, 
         convert_sklearn_format_to_clusters(other_clusters)
     )
