@@ -12,18 +12,18 @@ from .exceptions import AlphaValueError, NotFittedError
 
 LOGGER = Logger(__name__)
 
-class AlphaShape(ABC):
+class AlphaComplex(ABC):
     """
-    An abstract base class for Alpha Shapes. Works like sklearn classes with a fit and predict method.
+    An abstract base class for Alpha Complexes. Works like sklearn classes with a fit and predict method.
     """
     vertices: np.ndarray
     tesselation: np.ndarray
-    alpha_shape: list[np.array]
+    alpha_complex: list[np.array]
 
     @abstractmethod
     def __init__(self, vertices: np.ndarray) -> None:
         """
-        Initialises an Alpha Shape interface. The implementing interface should only receive the vertices the shape needs to be constructed during initialisation.
+        Initialises an Alpha Complex interface. The implementing interface should only receive the vertices the complex needs to be constructed during initialisation.
         """
         pass
 
@@ -37,28 +37,28 @@ class AlphaShape(ABC):
     @abstractmethod
     def predict(self, alpha: float) -> list[np.array]:
         """
-        The predict method of a class that implements this base class, constructs the shape by filtering the Dealunay triangulation. 
+        The predict method of a class that implements this base class, constructs the complex by filtering the Delaunay triangulation. 
         """
         pass
 
     @property
     def n_simplices(self) -> int:
         """
-        A convenience property that calculates the total number of simplices generated in an Alpha shape.
+        A convenience property that calculates the total number of simplices generated in an Alpha complex.
         """
-        return sum(len(simplices) for simplices in self.alpha_shape)
+        return sum(len(simplices) for simplices in self.alpha_complex)
 
     @property
-    def get_shape(self) -> np.ndarray:
+    def get_complex(self) -> np.ndarray:
         """
-        A convenience property that returns the generated Alpha shape checking if it has been constructed.
+        A convenience property that returns the generated Alpha complex checking if it has been constructed.
         """
-        if self.alpha_shape is None:
+        if self.alpha_complex is None:
             raise NotFittedError(
                 type(self),
                 LOGGER
             )
-        return self.alpha_shape
+        return self.alpha_complex
  
     @staticmethod
     @abstractmethod
@@ -70,27 +70,27 @@ class AlphaShape(ABC):
 
     def _face_filter(self, simplices: np.ndarray) -> np.ndarray:
         """
-        A private method that is provided to the derived class to filter down simplices in dimension and provide unqiue sets of the same.
+        A private method that is provided to the derived class to filter down simplices in dimension and provide unique sets of the same.
         """
-        k = simplices.shape[1]
+        k = simplices.complex[1]
         simplex_filter = list(itertools.combinations(list(range(k)), k - 1))
-        faces = simplices[:, simplex_filter].reshape(-1, k - 1)
+        faces = simplices[:, simplex_filter].recomplex(-1, k - 1)
         faces = np.sort(faces, axis = 1)
         return np.unique(faces, axis = 0)
 
 
-class AlphaShape2D(AlphaShape):
+class AlphaComplex2D(AlphaComplex):
     """
-    A specialised class that implements `AlphaShape` that constructs 2D Alpha shapes.
+    A specialised class that implements `AlphaComplex` that constructs 2D Alpha complexes.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
         self.tesselation = None
-        self.alpha_shape = None
+        self.alpha_complex = None
 
     def fit(self) -> None:
         """
-        `AlphaShape2D` does not implement the fit method as the Delaunay triangulation needs to be reconstructed based on the value of `alpha`.
+        `AlphaComplex2D` does not implement the fit method as the Delaunay triangulation needs to be reconstructed based on the value of `alpha`.
 
         Raises
         ------
@@ -98,28 +98,28 @@ class AlphaShape2D(AlphaShape):
             If the method is called.
         """
         raise NotImplementedError(
-            "AlphaShape2D does not support fit method. Please call predict directly."
+            "AlphaComplex2D does not support fit method. Please call predict directly."
         )
 
     def predict(self, alpha: float) -> None:
         """
-        Creates the Alpha shape by filtering the Delaunay triangulation.
+        Creates the Alpha complex by filtering the Delaunay triangulation.
 
         Parameters
         ----------
         alpha: 
-            Parameterises the constructed shape.
+            Parameterises the constructed complex.
         """
         LOGGER.info(
-            f"Finding the \u03B1-shape for given point set with \u03B1 = {alpha}..."
+            f"Finding the \u03B1-complex for given point set with \u03B1 = {alpha}..."
         )
         if alpha == 0:
             simplices = ConvexHull(self.vertices).simplices
-            self.alpha_shape = (
+            self.alpha_complex = (
                     np.concatenate(
                     [
                         simplices, 
-                        np.zeros(simplices.shape[0], dtype = np.int32)[..., None]
+                        np.zeros(simplices.complex[0], dtype = np.int32)[..., None]
                     ],
                     axis = -1
                 ),
@@ -138,10 +138,10 @@ class AlphaShape2D(AlphaShape):
         unique_triangles = np.unique(picked_simplices, axis = 0)
         unique_edges = self._face_filter(unique_triangles)
 
-        self.alpha_shape = [unique_triangles, unique_edges]
+        self.alpha_complex = [unique_triangles, unique_edges]
         
         LOGGER.info(
-            f"\u03B1-shape with {self.n_simplices} simplices generated."
+            f"\u03B1-complex with {self.n_simplices} simplices generated."
         )
 
     @staticmethod
@@ -152,7 +152,7 @@ class AlphaShape2D(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the complex (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -163,7 +163,7 @@ class AlphaShape2D(AlphaShape):
             _m = np.concatenate(
                 [
                     tessellation_vertices, 
-                    np.ones(tessellation_vertices.shape[: 2] + (1, ))
+                    np.ones(tessellation_vertices.complex[: 2] + (1, ))
                 ],
                 axis = -1
             )
@@ -178,15 +178,15 @@ class AlphaShape2D(AlphaShape):
 
     def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
         """
-        Produces a summary of the generated shape.
+        Produces a summary of the generated complex.
 
         Parameters
         ----------
         alpha:
-            The value used to construct the Alpha shape.
+            The value used to construct the Alpha complex.
 
         dataset:
-            Name of the dataset on which the shape was constructed.
+            Name of the dataset on which the complex was constructed.
 
         Returns
         -------
@@ -206,14 +206,14 @@ class AlphaShape2D(AlphaShape):
         )
         
 
-class AlphaShape3D(AlphaShape):
+class AlphaComplex3D(AlphaComplex):
     """
-    A specialised class that implements `AlphaShape` that constructs 3D Alpha shapes.
+    A specialised class that implements `AlphaComplex` that constructs 3D Alpha complexes.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
         self.tesselation = None
-        self.alpha_shape = None
+        self.alpha_complex = None
 
     def fit(self) -> None:
         """
@@ -223,12 +223,12 @@ class AlphaShape3D(AlphaShape):
 
     def predict(self, alpha: float) -> None:
         """
-        Creates the Alpha shape by filtering the Delaunay triangulation.
+        Creates the Alpha complex by filtering the Delaunay triangulation.
 
         Parameters
         ----------
         alpha: 
-            Parameterises the constructed shape.
+            Parameterises the constructed complex.
         """
         if alpha < 0:
             raise AlphaValueError(
@@ -238,7 +238,7 @@ class AlphaShape3D(AlphaShape):
             )
 
         if alpha == 0:
-            self.alpha_shape = ConvexHull(self.vertices).simplices
+            self.alpha_complex = ConvexHull(self.vertices).simplices
             return
 
         LOGGER.info(
@@ -254,10 +254,10 @@ class AlphaShape3D(AlphaShape):
 
         unique_edges = self._face_filter(unique_triangles)
 
-        self.alpha_shape = [unique_triangles, unique_edges]
+        self.alpha_complex = [unique_triangles, unique_edges]
 
         LOGGER.info(
-            f"\u03B1-shape with {self.n_simplices} simplices generated."
+            f"\u03B1-complex with {self.n_simplices} simplices generated."
         )
 
     @staticmethod
@@ -268,7 +268,7 @@ class AlphaShape3D(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the complex (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -288,7 +288,7 @@ class AlphaShape3D(AlphaShape):
                 [
                     tessellation_vertices, 
                     vertex_norms,
-                    np.ones(tessellation_vertices.shape[: -1] + (1, ))
+                    np.ones(tessellation_vertices.complex[: -1] + (1, ))
                 ],
                 axis = -1
             )
@@ -314,15 +314,15 @@ class AlphaShape3D(AlphaShape):
 
     def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
         """
-        Produces a summary of the generated shape.
+        Produces a summary of the generated complex.
 
         Parameters
         ----------
         alpha:
-            The value used to construct the Alpha shape.
+            The value used to construct the Alpha complex.
 
         dataset:
-            Name of the dataset on which the shape was constructed.
+            Name of the dataset on which the complex was constructed.
 
         Returns
         -------
@@ -341,13 +341,13 @@ class AlphaShape3D(AlphaShape):
             columns = [f"Dataset: {dataset}"]
         )
 
-class AlphaShapeND(AlphaShape):
+class AlphaComplexND(AlphaComplex):
     """
-    A specialised interface that implements `AlphaShape` used to construct `n` D shapes, where :math:`n > 1`.
+    A specialised interface that implements `AlphaComplex` used to construct `n` D complexes, where :math:`n > 1`.
     """
     def __init__(self, vertices: np.ndarray) -> None:
         self.vertices = vertices
-        self.alpha_shape = None
+        self.alpha_complex = None
         self.tesselation = None
 
     def fit(self) -> None:
@@ -357,17 +357,17 @@ class AlphaShapeND(AlphaShape):
         # Check the tessellation for degenerate simplices and remove them.
         self.tesselation = Delaunay(self.vertices)
         LOGGER.info(
-            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.nsimplex} simplices."
+            f"Constructed the delaunay triangulation with furthest_site = False and {self.tesselation.n_simplices} simplices."
         )
 
     def predict(self, alpha: float) -> None:
         """
-        Creates the Alpha shape by filtering the Delaunay triangulation.
+        Creates the Alpha complex by filtering the Delaunay triangulation.
 
         Parameters
         ----------
         alpha: 
-            Parameterises the constructed shape.
+            Parameterises the constructed complex.
         """
         if alpha < 0:
             raise AlphaValueError(
@@ -377,7 +377,7 @@ class AlphaShapeND(AlphaShape):
             )
 
         if alpha == 0:
-            self.alpha_shape = ConvexHull(self.vertices).simplices
+            self.alpha_complex = ConvexHull(self.vertices).simplices
             return
         one_by_alpha = 1 / alpha
         simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
@@ -387,13 +387,13 @@ class AlphaShapeND(AlphaShape):
         picked_simplices = self.tesselation.simplices[picked_simplex_indices]
         unique_picked_simplices = np.unique(picked_simplices, axis = 0)
         n = self.vertices.shape[1]
-        self.alpha_shape = [unique_picked_simplices]
+        self.alpha_complex = [unique_picked_simplices]
         for _ in range(n, 1, -1):
             unique_picked_simplices = self._face_filter(unique_picked_simplices)
-            self.alpha_shape.append(unique_picked_simplices)
+            self.alpha_complex.append(unique_picked_simplices)
         
         LOGGER.info(
-            f"\u03B1-shape with {self.n_simplices} simplices generated."
+            f"\u03B1-complex with {self.n_simplices} simplices generated."
         )
         
 
@@ -405,7 +405,7 @@ class AlphaShapeND(AlphaShape):
         Parameters
         ----------
         tesselation_vertices:
-            A numpy ndarray containing the simplices. Usually of the shape (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
+            A numpy ndarray containing the simplices. Usually of the complex (`n, k + 1, k`). This usually denotes that there are `n` simplices each with dimension `k` and number of points `k + 1`.
 
         Returns
         -------
@@ -433,15 +433,15 @@ class AlphaShapeND(AlphaShape):
             
     def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
         """
-        Produces a summary of the generated shape.
+        Produces a summary of the generated complex.
 
         Parameters
         ----------
         alpha:
-            The value used to construct the Alpha shape.
+            The value used to construct the Alpha complex.
 
         dataset:
-            Name of the dataset on which the shape was constructed.
+            Name of the dataset on which the complex was constructed.
 
         Returns
         -------
