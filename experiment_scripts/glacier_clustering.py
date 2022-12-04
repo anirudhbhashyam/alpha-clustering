@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 mpl.pyplot.switch_backend("Agg")
 
 
-from alpha_clustering.alpha_shape import AlphaShapeND
+from alpha_clustering.alpha_complex import AlphaComplexND
 from alpha_clustering.cluster import Cluster
 from alpha_clustering.plot import Plot
 from alpha_clustering.io_handler import IOHandler
@@ -52,15 +52,15 @@ def process_data_chunk(data_chunk: pd.DataFrame) -> np.ndarray:
     yield point_cloud
 
 
-def create_alpha_shape(
+def create_alpha_complex(
     point_cloud: np.ndarray, 
     alpha: float,
 ) -> list[np.array]:
-    ac = AlphaShapeND(point_cloud)
+    ac = AlphaComplexND(point_cloud)
     ac.fit()
     ac.predict(alpha)
-    # triangles = ac.get_shape[0]
-    return ac.get_shape
+    # triangles = ac.get_complex[0]
+    return ac.get_complex
 
 
 def cluster_cloud(shape: list[np.ndarray]) -> list[list[int]]:
@@ -78,27 +78,28 @@ def plot_simplices(point_cloud: np.ndarray, simplices: np.ndarray, ax: plt.Axes)
     )
 
 def run_on_file_full(file: Path) -> tuple[
-        pd.DataFrame, pd.DataFrame, plt.Figure
+        pd.DataFrame, pd.DataFrame, plt.Figure, plt.Figure
     ]:
     data = pd.read_csv(file, sep = "\t", header = None)
     cloud = next(process_data_chunk(data))
     print(f"Processed point cloud data.".center(TERMINAL_WIDTH, "-"))
 
     start_time = time.time()
-    shape = create_alpha_shape(cloud, 3.00)
+    shape = create_alpha_complex(cloud, 2.00)
     clusters = cluster_cloud(shape)
     end_time = time.time()
     print(f"Finished alpha clustering.".center(TERMINAL_WIDTH, "-"))
 
 
     plot = Plot(cloud)
-    fig = plot.clusters(clusters)
+    fig_cluster = plot.clusters(clusters)
+    fig_shape = plot.alpha_complex(shape)
     cluster_details = pd.DataFrame(
         {
-            "n_clusters": len(clusters),
-            "n_points": len(cloud),
-            "n_simplices": sum(len(s) for s in shape),
-            "time": abs(start_time - end_time)
+            "$n$-clusters": len(clusters),
+            "$n$-points": len(cloud),
+            "$n$-simplices": sum(len(s) for s in shape),
+            "AC Time": abs(start_time - end_time)
         },
         index = [0]
     )
@@ -112,13 +113,13 @@ def run_on_file_full(file: Path) -> tuple[
 
     kmeans_cluster_details = pd.DataFrame(
         {
-            "n_clusters": len(np.unique(kmeans_clusters)),
-            "time": abs(start_time - end_time)
+            "$n$-clusters": len(np.unique(kmeans_clusters)),
+            "KMeans Time": abs(start_time - end_time)
         },
         index = [0]
     )
 
-    return cluster_details, kmeans_cluster_details, fig
+    return cluster_details, kmeans_cluster_details, fig_cluster, fig_shape
 
 
 def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
@@ -153,8 +154,8 @@ def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
 
     cluster_details = pd.DataFrame(
         {
-            "n_clusters": len(clusters),
-            "time": start_time - end_time
+            "$n$-clusters": len(clusters),
+            "AC Time": start_time - end_time
         }, 
         index = [0]
     )
@@ -167,10 +168,10 @@ def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
 
     kmeans_cluster_details = pd.DataFrame(
         {
-            "n_clusters": len(kmeans_clusters),
-            "n_points": len(cloud),
-            "n_simplices": sum(len(s) for s in shape),
-            "time": start_time - end_time
+            "$n$-clusters": len(kmeans_clusters),
+            "$n$-points": len(cloud),
+            "$n$-simplices": sum(len(s) for s in shape),
+            "KMeans Time": start_time - end_time
         },
         index = [0]
     )
@@ -210,6 +211,7 @@ def main() -> int:
     cluster_details_dfs = list()
     kmeans_cluster_details_dfs = list()
     figs = list()
+    figs_shapes = list()
 
     # with multiprocessing.Pool(4) as pool:
     #     cluster_details, kmeans_cluster_details, fig = pool.map(
@@ -221,15 +223,16 @@ def main() -> int:
 
     for file in io_h.get_data_dir.glob("*.xyz"):
         print(f"Processing file: {file.name}".center(TERMINAL_WIDTH, "-"))
-        cluster_details, kmeans_cluster_details, fig = run_on_file_full(file)
+        cluster_details, kmeans_cluster_details, fig_cluster, fig_shape = run_on_file_full(file)
         cluster_details_dfs.append(cluster_details)
         kmeans_cluster_details_dfs.append(kmeans_cluster_details)
-        figs.append(fig)
+        figs.append(fig_cluster)
+        figs_shapes.append(fig_shape)
         print(f"Processed file: {file.name}".center(TERMINAL_WIDTH, "-"))
 
     all_data_df = pd.merge(
         pd.concat(cluster_details_dfs),
-        pd.concat(kmeans_cluster_details_dfs)["time"],
+        pd.concat(kmeans_cluster_details_dfs)["KMeans Time"],
 
     )
     
@@ -253,6 +256,12 @@ def main() -> int:
         dataset,
         figs,
         [f"{dataset}_clusters_{i}" for i in range(len(figs))],
+    )
+
+    io_h.write_figs(
+        dataset,
+        figs_shapes,
+        [f"{dataset}_shape_{i}" for i in range(len(figs_shapes))],
     )
 
     # cluster_details, kmeans_cluster_details, fig = run_on_file_chunks(file, chunksize)
@@ -280,4 +289,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    SystemExit(main())
+    sys.exit(main())
