@@ -74,7 +74,7 @@ class IOHandler:
         with open(write_dir / save_name, "w") as f:
             f.write(
                 main_df.style\
-                .format("{:.4f}")\
+                # .apply(lambda x: [f"{v:.2f}" for v in x], subset = format_subset)\
                 .applymap_index(
                     lambda v: "font-weight: bold;", axis = "columns"
                 )\
