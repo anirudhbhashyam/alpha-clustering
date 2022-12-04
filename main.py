@@ -24,7 +24,7 @@ from utils import *
 def process_data(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray, int]:
     points = df.iloc[:, : -1].to_numpy()
     all_labels = df.iloc[:, -1].apply(lambda x: int(x))
-    n_true_clusters = 4
+    n_true_clusters = df.iloc[:, -1].nunique()
     return points, all_labels, n_true_clusters
 
 def process_args() -> argparse.Namespace:
@@ -126,15 +126,22 @@ def evaluate_clusters(
         other_labels
     )
     
-    df1 = cl_eval_one.get_results(method = "alpha complex clustering")
-    df2 = cl_eval_two.get_results(method = f"{method} clustering")
+    df1 = cl_eval_one.get_results(method = "Alpha clustering")
+    df2 = cl_eval_two.get_results(method = f"{method.capitalize()} clustering")
+
+    for index in df1.index:
+        change_style_format_df(df1, lambda x: f"{x:.2f}", row = index)
+
+    for index in df2.index:
+        change_style_format_df(df2, lambda x: f"{x:.2f}", row = index)
 
     io.write_results(
         dataset,
         [df1, df2],
         f"{dataset}_evaluation.tex",
-        caption = "Summary of the evaluation of the clustering methods.",
-        label = f"TAB:{dataset.capitalize()}Evaluation"
+        caption = f"Summary of the evaluation of the clustering methods for {dataset}.",
+        label = f"TAB:{dataset.capitalize()}Evaluation",
+        column_format = "lrr"
     )
     return df1, df2
 
@@ -156,13 +163,20 @@ def summarise_points(
         )],
         threshold = 4
     )
+    change_style_format_df(df1, lambda x: f"{x:.4f}", row = "Alpha")
+    change_style_format_df(df1, lambda x: f"{x:.0f}", row = "Number of vertices")
+    change_style_format_df(df1, lambda x: f"{x:.0f}", row = "Number of simplices")
+    change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Set cluster threshold")
+    change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Number of alpha clusters")
+    change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Number of KMeans clusters")
     io.write_results(
         dataset,
         [df1, df2],
         f"{dataset}_summary.tex",
         caption = f"Summary of the dataset {dataset} and its alpha complex.",
         join_axis = 0,
-        label = f"TAB:{dataset.capitalize()}Summary"
+        label = f"TAB:{dataset.capitalize()}Summary",
+        column_format = "lrr"
     )
 
 def main() -> None:
