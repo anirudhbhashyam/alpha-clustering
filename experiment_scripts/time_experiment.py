@@ -1,3 +1,4 @@
+import sys
 import time
 
 from functools import wraps
@@ -13,11 +14,15 @@ from sklearn.cluster import KMeans
 
 from scipy.stats import ttest_ind
 
-from alpha_clustering.alpha_shape import AlphaShapeND
+from alpha_clustering.alpha_complex import AlphaComplexND
 from alpha_clustering.cluster import Cluster
 from alpha_clustering.io_handler import IOHandler
 
 CPD = Path(__file__).resolve().parents[1]
+
+sys.path.append(str(CPD))
+
+from utils import change_style_format_df
 
 ALL_DATASETS: dict[str, tuple[float, int]] = {
     "aggregation.arff": (1.625, 7),
@@ -57,13 +62,13 @@ def time_experiment(
 ) -> tuple[float, float, int, int]:
     alpha_time = 0.0
     kmeans_time = 0.0
-    ac = AlphaShapeND(points)
+    ac = AlphaComplexND(points)
     for _ in range(runs):
         start = time.perf_counter()
         ac.fit()
         ac.predict(alpha)
         clustering = Cluster(
-            shape = ac.get_shape
+            shape = ac.get_complex
         )
         clustering.fit()
         clusters_alpha = clustering.predict(4)
@@ -120,23 +125,25 @@ def main() -> int:
             {
                 "AC Time (s)": alpha_time,
                 "KM Time (s)": kmeans_time,
-                "predicted alpha clusters": n_clusters_alpha,
-                "predicted kmeans clusters": n_clusters_kmeans,
-                "ground truth clusters": data.iloc[:, -1].nunique()
+                "$n$-alpha clusters": n_clusters_alpha,
+                "$n$-kmeans clusters": n_clusters_kmeans,
+                "$n$-true clusters": data.iloc[:, -1].nunique()
             },
             index = [dataset_name],
         )
-        df.astype({
-            "predicted alpha clusters": int,
-            "predicted kmeans clusters": int,
-            "ground truth clusters": int
-        }) 
         dfs.append(df)
 
     df = pd.concat(dfs)
 
     time_results = df.iloc[:, : 2]
     cluster_results = df.iloc[:, 2 :]
+
+    change_style_format_df(time_results, lambda x: f"{x:.4f}", col = "AC Time (s)")
+    change_style_format_df(time_results, lambda x: f"{x:.4f}", col = "KM Time (s)")
+    change_style_format_df(cluster_results, lambda x: f"{x:.0f}", col = "$n$-alpha clusters")
+    change_style_format_df(cluster_results, lambda x: f"{x:.0f}", col = "$n$-kmeans clusters")
+    change_style_format_df(cluster_results, lambda x: f"{x:.0f}", col = "$n$-true clusters")
+
 
     io_handler.write_results(
         dataset = "all",
@@ -145,6 +152,7 @@ def main() -> int:
         caption = "Performance results for all datasets. AC: Alpha Clustering, KM: KMeans clustering.",
         join_axis = 0,
         label = "TAB:PerformanceResultsI",
+        column_format = "lrr"
     )
 
     io_handler.write_results(
@@ -152,7 +160,9 @@ def main() -> int:
         results = [cluster_results],
         save_name = "cluster_results.tex",
         caption = "Cluster results for all datasets.",
-        join_axis = 0,
+        label = "TAB:PerformanceClusterResultsI",
+        column_format = "lrrr",
+        join_axis = 0
     )
 
     t_stat, p_value = get_significance(
@@ -164,4 +174,4 @@ def main() -> int:
     return 0 
 
 if __name__ == "__main__":
-    SystemExit(main())
+    sys.exit(main())
