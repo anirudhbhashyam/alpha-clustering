@@ -13,7 +13,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-from alpha_clustering.alpha_shape import AlphaShapeND
+from alpha_clustering.alpha_complex import AlphaComplexND
 from alpha_clustering.cluster import Cluster
 from alpha_clustering.plot import Plot
 from alpha_clustering.io_handler import IOHandler
@@ -30,7 +30,7 @@ def analyse_sensitivity_fix_data(
     alphas: Iterable[float],
     true_labels: np.ndarray = None
 ) -> tuple[list[int], list[int], list[float]]:
-    ac = AlphaShapeND(points)
+    ac = AlphaComplexND(points)
     ac.fit()
     n_predicted_clusters = list()
     n_simplices = list()
@@ -38,7 +38,7 @@ def analyse_sensitivity_fix_data(
     n_points = points.shape[0]
     for alpha in alphas:
         ac.predict(alpha)
-        clustering = Cluster(ac.get_shape)
+        clustering = Cluster(ac.get_complex)
         clustering.fit()
         clusters = clustering.predict(4)
         n_clusters = len(clusters)
@@ -61,17 +61,17 @@ def analyse_sensitivity_fix_alpha(
     alpha_figs = list()
     for point_cloud in points:
         plot = Plot(vertices = point_cloud)
-        ac = AlphaShapeND(point_cloud)
+        ac = AlphaComplexND(point_cloud)
         ac.fit()
         ac.predict(alpha)
-        clustering = Cluster(ac.get_shape)
+        clustering = Cluster(ac.get_complex)
         clustering.fit()
         n_clusters = len(clustering.predict(4))
 
         n_predicted_clusters.append(n_clusters)
         n_simplices.append(ac.n_simplices)
         n_points.append(point_cloud.shape[0])
-        alpha_figs.append(plot.alpha_shape(ac.get_shape, points_q = False))
+        alpha_figs.append(plot.alpha_complex(ac.get_complex, points_q = False))
 
     return n_predicted_clusters, n_simplices, n_points, alpha_figs
 
@@ -112,7 +112,7 @@ def main() -> int:
     varying_density_df = pd.DataFrame(
         {
             "n-points": [int(x) for x in n_points],
-            "densities": [1.26645, 3.49977, 4.66239, 6.22989, 8.32099, 10.3166, 10.8834, 12.1598, 14.8071, 16.0678, 16.9286, 18.2762, 19.3027, 23.7176, 23.2686, 24.9328, 26.4615, 28.8363, 29.2021, 30.6723],
+            "Densities": [1.26645, 3.49977, 4.66239, 6.22989, 8.32099, 10.3166, 10.8834, 12.1598, 14.8071, 16.0678, 16.9286, 18.2762, 19.3027, 23.7176, 23.2686, 24.9328, 26.4615, 28.8363, 29.2021, 30.6723],
             "n-simplices": [int(x) for x in n_simplices],
             "n-clusters-predicted": n_clusters_predicted
         }
@@ -120,17 +120,17 @@ def main() -> int:
 
     varying_alpha_df = pd.DataFrame(
         {
-            "alpha": alphas,
-            "n-simplices": n_simplices_varying_alpha,
-            "n-clusters-predicted": n_clusters_predicted_varying_alpha,
-            "mi-scores": mi_scores_varying_alpha
+            "Alpha": alphas,
+            "$n$-simplices": n_simplices_varying_alpha,
+            "$n$-clusters-predicted": n_clusters_predicted_varying_alpha,
+            "MI-scores": mi_scores_varying_alpha
         }
     )
 
     lr = LinearRegression()
     X_train, X_test, y_train, y_test = train_test_split(
-        varying_density_df["n-points"].to_numpy().reshape(-1, 1),
-        varying_density_df["n-simplices"].to_numpy(),
+        varying_density_df["$n$-points"].to_numpy().reshape(-1, 1),
+        varying_density_df["$n$-simplices"].to_numpy(),
         test_size = 0.2,
         random_state = 42
     )
@@ -147,19 +147,33 @@ def main() -> int:
         }
     )
 
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.2f}", col = "Alpha")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.2f}", col = "MI-scores")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "n-simplices")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "n-clusters-predicted")
+
+    change_style_format_df(varying_density_df, lambda x: f"{x:.2f}", col = "Densities")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-points")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-simplices")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-clusters-predicted")
+
+    change_style_format_df(lr_df, lambda x: f"{x:.2f}", col = "coef")
+    change_style_format_df(lr_df, lambda x: f"{x:.2f}", col = "intercept")
+    change_style_format_df(lr_df, lambda x: f"{x:.2f}", col = "r2")
+
     io_handler.write_figs(
         dataset_varying_density,
         alpha_figs,
-        [f"alpha_shape_{i}.png" for i in range(len(alpha_figs))],
+        [f"alpha_complex_{i}.png" for i in range(len(alpha_figs))],
     )
 
     io_handler.write_results(
         dataset_varying_density,
         [varying_density_df],
         f"{dataset_varying_density}_evaluation.tex",
-        caption = "Evaluation of the alpha shape on a varying density of points.",
-        join_axis = 0,
-        label = "TAB:VaryingDensityResults"
+        caption = "Evaluation of the alpha complex on a varying density of points.",
+        label = "TAB:VaryingDensityResults",
+        join_axis = 0
     )
 
     io_handler.write_results(
@@ -175,7 +189,7 @@ def main() -> int:
         dataset_varying_alpha,
         [varying_alpha_df],
         f"{dataset_varying_alpha}_evaluation.tex",
-        caption = "Evaluation of the alpha shape on a varying alpha.",
+        caption = "Evaluation of the alpha complex on a varying alpha.",
         label = "TAB:VaryingAlphaResults",
         join_axis = 0
     )
