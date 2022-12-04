@@ -46,7 +46,7 @@ class AlphaComplex(ABC):
         """
         A convenience property that calculates the total number of simplices generated in an Alpha complex.
         """
-        return sum(len(simplices) for simplices in self.alpha_complex)
+        return int(sum(len(simplices) for simplices in self.alpha_complex))
 
     @property
     def get_complex(self) -> np.ndarray:
@@ -197,7 +197,7 @@ class AlphaComplex2D(AlphaComplex):
         """
         summary = {
             "Alpha": alpha,
-            "Number of vertices": len(self.vertices),
+            "Number of vertices": int(len(self.vertices)),
             "Number of simplices": self.n_simplices,
         }
 
@@ -333,7 +333,7 @@ class AlphaComplex3D(AlphaComplex):
         """
         summary = {
             "Alpha": alpha,
-            "Number of vertices": len(self.vertices),
+            "Number of vertices": int(len(self.vertices)),
             "Number of simplices": self.n_simplices,
         }
 
@@ -452,12 +452,12 @@ class AlphaComplexND(AlphaComplex):
         """
         summary = {
             "Alpha": alpha,
-            "Number of vertices": len(self.vertices),
+            "Number of vertices": int(len(self.vertices)),
             "Number of simplices": self.n_simplices,
         }
 
         return pd.DataFrame.from_dict(
             summary,
-            orient = "index",
-            columns = [f"Dataset: {dataset}"]
+            orient = "index",   
+            columns = [f"Dataset: {dataset}"],
         )
