@@ -41,7 +41,7 @@ class Plot:
 
     def alpha_complex(
         self,
-        complex: np.ndarray,
+        shape: np.ndarray,
         figsize: tuple[float, float] = (16, 9),
         points_q: bool = True,
         ticks_q: bool = True,
@@ -50,7 +50,7 @@ class Plot:
 
         
         # Find the triangles in the complex.
-        for simplices in complex:
+        for simplices in shape:
             if simplices.shape[1] == 3:
                 triangles = simplices
                 break
@@ -94,7 +94,7 @@ class Plot:
         NUM_COLORS = len(clusters)
 
         # cm = plt.get_cmap("gist_rainbow")
-        ax.set_prop_cycle("color", [COLOR_PALETTE[i] for i in range(NUM_COLORS)])
+        ax.set_prop_cycle("color", [COLOR_PALETTE[i % len(COLOR_PALETTE)] for i in range(NUM_COLORS)])
 
         for label, c in enumerate(clusters):
             ax.scatter(
