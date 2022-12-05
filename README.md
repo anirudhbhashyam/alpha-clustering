@@ -2,7 +2,7 @@
 
 [![Docs Build](https://readthedocs.org/projects/alpha-clustering/badge/?version=latest)](https://alpha-clustering.readthedocs.io/en/latest/?badge=latest)
 
-![Tests](https://github.com/anirudhbhashyam/alpha-clustering/actions/workflows/tests.yaml/badge.svg)
+![Tests](https://github.com/anirudhbhashyam/alpha-clustering/actions/workflows/test.yml/badge.svg)
 
 This repository contains packages to run an algorithm to cluster data using alpha shapes.
 
