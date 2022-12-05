@@ -44,6 +44,7 @@ clustering.fit()
 clusters = clustering.predict()
 # The returned clusters are a list of lists of indices.
 # So len(clusters) is the number of clusters.
+
 ```
 
 
