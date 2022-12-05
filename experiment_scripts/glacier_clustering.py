@@ -5,7 +5,6 @@ import shutil
 import argparse
 from pathlib import Path
 
-from pathlib import Path
 from functools import partial
 
 import multiprocessing
@@ -23,7 +22,6 @@ import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 mpl.pyplot.switch_backend("Agg")
-
 
 from alpha_clustering.alpha_complex import AlphaComplexND
 from alpha_clustering.cluster import Cluster
@@ -125,7 +123,7 @@ def run_on_file_full(file: Path) -> tuple[
 def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
     partial_alpha_shape_creator = partial(create_alpha_shape, alpha = 5e-6)
     clouds = [process_data_chunk(c) for c in read_glacier_data(file, cs)]
-    # print("Processsed point clouds.".center(TERMINAL_WIDTH, "-"))
+    # print("Processed point clouds.".center(TERMINAL_WIDTH, "-"))
     kmeans = KMeans(n_clusters = len(clusters))
     shapes = dict()
 
@@ -230,11 +228,11 @@ def main() -> int:
         figs_shapes.append(fig_shape)
         print(f"Processed file: {file.name}".center(TERMINAL_WIDTH, "-"))
 
-    all_data_df = pd.merge(
-        pd.concat(cluster_details_dfs),
-        pd.concat(kmeans_cluster_details_dfs)["KMeans Time"],
+    # all_data_df = pd.merge(
+    #     pd.concat(cluster_details_dfs),
+    #     pd.concat(kmeans_cluster_details_dfs)["KMeans Time"],
 
-    )
+    # )
     
     io_h.write_results(
         dataset,
