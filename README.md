@@ -6,27 +6,59 @@
 
 This repository contains packages to run an algorithm to cluster data using alpha shapes.
 
+
 # Documentation
 The documentation can be found [here](https://alpha-clustering.readthedocs.io/en/latest/).
 
 
 # Usage 
-<!-- Clone the repository. -->
-To use the package, the ideal thing would be to clone the repository locally and then install it.
+
+## Getting Started
+To use the repository, the ideal thing would be to clone the repository locally and then install it as a package.
 ```
-> git clone https://github.com/anirudhbhashyam/alpha-clustering
-> cd alpha-clustering
+> python -m virtualenv venv
+> source (.) venv/bin/activate
+> mkdir deps
+> git clone https://github.com/anirudhbhashyam/alpha-clustering deps
+> cd deps/alpha-clustering
 > pip install -e .
 ```
 
-Additionally, a virtual environment maybe setup before installation. 
-```
->>> python -m virtualenv venv
+## Examples
+```python
+import numpy as np
+from alpha_clustering.alpha_complex import AlphaComplexND
+from alpha_clustering.cluster import Cluster
+
+# Generate a random set of points in 2D.
+points = np.random.rand(100, 2)
+ac = AlphaComplexND(points)
+# Fit the shape.
+ac.fit()
+# Predict the shape using some alpha.
+ac.predict(alpha = 0.5)
+# Setup the clustering object.
+clustering = Cluster(ac.get_shape)
+clustering.fit()
+# Predict the clusters.
+clusters = clustering.predict()
+# The returned clusters are a list of lists of indices.
+# So len(clusters) is the number of clusters.
 ```
 
+
 # Development
-To run the tests
+To run the tests, do the following from the root.
 ```
->>> pip install -r requirements.txt
->>> pytest
+> pip install -r requirements.txt
+> pytest
+```
+
+To build the documentation locally, do the following from the root.
+```
+> cd docs
+> pip install -r requirements.txt
+> make html
+```
+
 ```
