@@ -8,7 +8,7 @@ on:
         - main
 
 jobs: 
-  check_install:
+  check-install:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
