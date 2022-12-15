@@ -33,9 +33,9 @@ from alpha_clustering.cluster import Cluster
 # Generate a random set of points in 2D.
 points = np.random.rand(100, 2)
 ac = AlphaComplexND(points)
-# Fit the shape.
+# Fit the complex.
 ac.fit()
-# Predict the shape using some alpha.
+# Predict the complex using some alpha.
 ac.predict(alpha = 0.5)
 # Setup the clustering object.
 clustering = Cluster(ac.get_shape)
@@ -45,6 +45,7 @@ clusters = clustering.predict()
 # The returned clusters are a list of lists of indices.
 # So len(clusters) is the number of clusters.
 
+For a more detailed guide visit the [documentation](https://alpha-clustering.readthedocs.io/en/latest/).
 ```
 
 
