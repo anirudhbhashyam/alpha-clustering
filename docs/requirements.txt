@@ -3,3 +3,4 @@ furo==2022.9.29
 nbsphinx==0.8.10
 # Requires a system instaalation of pandoc in addition to the python wrapper.
 pandoc==2.3
+ipykernel
