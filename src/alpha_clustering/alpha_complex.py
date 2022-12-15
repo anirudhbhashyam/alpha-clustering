@@ -384,7 +384,7 @@ class AlphaComplexND(AlphaComplex):
         one_by_alpha = 1 / alpha
         simplices = self.vertices.take(self.tesselation.simplices, axis = 0)
         simplices_circum_radii = self._circum_radius(simplices)
-        bool_index = (simplices_circum_radii <= one_by_alpha)
+        bool_index = (simplices_circum_radii <= (one_by_alpha ** 2))
         picked_simplex_indices = np.concatenate([np.where(bool_index)[0]])
         picked_simplices = self.tesselation.simplices[picked_simplex_indices]
         unique_picked_simplices = np.unique(picked_simplices, axis = 0)
@@ -398,7 +398,6 @@ class AlphaComplexND(AlphaComplex):
             f"\u03B1-complex with {self.n_simplices} simplices generated."
         )
         
-
     @staticmethod
     def _circum_radius(tessellation_vertices: np.ndarray) -> np.ndarray:
         """
@@ -421,17 +420,17 @@ class AlphaComplexND(AlphaComplex):
             ]
 
         distances = _circum_radius_helper(tessellation_vertices)
-        circum_radii = list()
+        circum_radii_squared = list()
         for dm in distances:
             m, n = dm.shape
             cm = np.block([
                 [0,               np.ones((1, n))],
                 [np.ones((m, 1)), dm             ],
             ])
-            circum_radii.append(
-                np.sqrt(np.linalg.det(dm) / (-2 * np.linalg.det(cm)))
+            circum_radii_squared.append(
+                np.linalg.det(dm) / (-2 * np.linalg.det(cm))
             )
-        return np.array(circum_radii, dtype = np.float64)
+        return np.array(circum_radii_squared, dtype = np.float64)
             
     def get_summary(self, alpha: float, dataset: str) -> pd.DataFrame:
         """

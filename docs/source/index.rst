@@ -7,29 +7,12 @@ Welcome to Alpha Clustering's documentation!
 ============================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-Modules
-=======
+   alpha_clustering
 
-Alpha Shape
------------
-
-.. automodule:: alpha_clustering.alpha_shape
-   :members:
-   :private-members:
-
-Clustering
-----------
-
-.. automodule:: alpha_clustering.cluster
-   :members:
-   :private-members:
-
-
-Usage 
-=====
+   usage_examples/usage
 
 
 Indices and tables
