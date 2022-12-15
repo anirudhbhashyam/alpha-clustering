@@ -44,9 +44,8 @@ clustering.fit()
 clusters = clustering.predict()
 # The returned clusters are a list of lists of indices.
 # So len(clusters) is the number of clusters.
-
-For a more detailed guide visit the [documentation](https://alpha-clustering.readthedocs.io/en/latest/).
 ```
+For a more detailed guide visit the [documentation](https://alpha-clustering.readthedocs.io/en/latest/).
 
 
 # Development
@@ -61,6 +60,4 @@ To build the documentation locally, do the following from the root.
 > cd docs
 > pip install -r requirements.txt
 > make html
-```
-
 ```
