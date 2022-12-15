@@ -34,7 +34,7 @@ sys.path.append(str(CPD))
 
 from utils import convert_clusters_format_to_sklearn 
 
-ONE_MILLION = 1000000
+ONE_MILLION = 1000_000
 
 TERMINAL_WIDTH, _ = shutil.get_terminal_size()
 
@@ -76,22 +76,22 @@ def plot_simplices(point_cloud: np.ndarray, simplices: np.ndarray, ax: plt.Axes)
     )
 
 def run_on_file_full(file: Path) -> tuple[
-        pd.DataFrame, pd.DataFrame, plt.Figure, plt.Figure
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, list[list[int]], list[list[np.array]]
     ]:
     data = pd.read_csv(file, sep = "\t", header = None)
     cloud = next(process_data_chunk(data))
     print(f"Processed point cloud data.".center(TERMINAL_WIDTH, "-"))
 
     start_time = time.time()
-    shape = create_alpha_complex(cloud, 2.00)
+    shape = create_alpha_complex(cloud, 5e-6)
     clusters = cluster_cloud(shape)
     end_time = time.time()
     print(f"Finished alpha clustering.".center(TERMINAL_WIDTH, "-"))
 
 
-    plot = Plot(cloud)
-    fig_cluster = plot.clusters(clusters)
-    fig_shape = plot.alpha_complex(shape)
+    # plot = Plot(cloud)
+    # fig_cluster = plot.clusters(clusters)
+    # fig_shape = plot.alpha_complex(shape)
     cluster_details = pd.DataFrame(
         {
             "$n$-clusters": len(clusters),
@@ -101,13 +101,13 @@ def run_on_file_full(file: Path) -> tuple[
         },
         index = [0]
     )
-    print(f"Finished plotting.".center(TERMINAL_WIDTH, "-"))
+    # print(f"Finished plotting.".center(TERMINAL_WIDTH // 2, "-"))
 
     start_time = time.time()
     kmeans = KMeans(n_clusters = len(clusters))
     kmeans_clusters = kmeans.fit_predict(cloud)
     end_time = time.time()
-    print(f"Finished kmeans clustering.".center(TERMINAL_WIDTH, "-"))
+    print(f"Finished kmeans clustering.".center(TERMINAL_WIDTH // 2, "-"))
 
     kmeans_cluster_details = pd.DataFrame(
         {
@@ -117,65 +117,65 @@ def run_on_file_full(file: Path) -> tuple[
         index = [0]
     )
 
-    return cluster_details, kmeans_cluster_details, fig_cluster, fig_shape
+    return cloud, cluster_details, kmeans_cluster_details, clusters, shape
 
 
-def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
-    partial_alpha_shape_creator = partial(create_alpha_shape, alpha = 5e-6)
-    clouds = [process_data_chunk(c) for c in read_glacier_data(file, cs)]
-    # print("Processed point clouds.".center(TERMINAL_WIDTH, "-"))
-    kmeans = KMeans(n_clusters = len(clusters))
-    shapes = dict()
-
-    start_time = time.perf_counter()
-    for i, data_chunk in enumerate(clouds):
-        try:
-            # cloud = process_data_chunk(data_chunk)
-            shapes[i] = partial_alpha_shape_creator(cloud)
-        except scipy.spatial._qhull.QhullError as e:
-            continue
-
-    cumulative_shape = list()
-    for i in range(len(shapes[0])):
-        cumulative_shape.append(np.concatenate([s[i] for s in shapes.values()]))
-
-    clusters = cluster_cloud(cumulative_shape)
-    end_time = time.perf_counter()
-
-    # for ind, shape in shapes.items():
-    #     plot_simplices(clouds[ind], shape[0], ax)
-    
-
-    cumulative_cloud = np.concatenate(clouds)
-    plot = Plot(cumulative_cloud)
-    fig = plot.clusters(clusters)
-
-    cluster_details = pd.DataFrame(
-        {
-            "$n$-clusters": len(clusters),
-            "AC Time": start_time - end_time
-        }, 
-        index = [0]
-    )
-
-    start_time = time.perf_counter()
-    kmeans_clusters = list()
-    for i, cloud in enumerate(clouds):
-        clusters = kmeans.fit_predict(cloud)
-    end_time = time.perf_counter()
-
-    kmeans_cluster_details = pd.DataFrame(
-        {
-            "$n$-clusters": len(kmeans_clusters),
-            "$n$-points": len(cloud),
-            "$n$-simplices": sum(len(s) for s in shape),
-            "KMeans Time": start_time - end_time
-        },
-        index = [0]
-    )
-
-    return cluster_details, fig
-
+# def run_on_file_chunks(file: Path, cs: int) -> tuple[pd.DataFrame, plt.Figure]:
+#     partial_alpha_shape_creator = partial(create_alpha_shape, alpha = 5e-6)
+#     clouds = [process_data_chunk(c) for c in read_glacier_data(file, cs)]
+#     # print("Processed point clouds.".center(TERMINAL_WIDTH, "-"))
+#     kmeans = KMeans(n_clusters = len(clusters))
+#     shapes = dict()
+# 
+#     start_time = time.perf_counter()
+#     for i, data_chunk in enumerate(clouds):
+#         try:
+#             # cloud = process_data_chunk(data_chunk)
+#             shapes[i] = partial_alpha_shape_creator(cloud)
+#         except scipy.spatial._qhull.QhullError as e:
+#             continue
+# 
+#     cumulative_shape = list()
+#     for i in range(len(shapes[0])):
+#         cumulative_shape.append(np.concatenate([s[i] for s in shapes.values()]))
+# 
+#     clusters = cluster_cloud(cumulative_shape)
+#     end_time = time.perf_counter()
+# 
+#     # for ind, shape in shapes.items():
+#     #     plot_simplices(clouds[ind], shape[0], ax)
+#     
+# 
+#     cumulative_cloud = np.concatenate(clouds)
+#     plot = Plot(cumulative_cloud)
+#     fig = plot.clusters(clusters)
+# 
+#     cluster_details = pd.DataFrame(
+#         {
+#             "$n$-clusters": len(clusters),
+#             "AC Time": start_time - end_time
+#         }, 
+#         index = [0]
+#     )
+# 
+#     start_time = time.perf_counter()
+#     kmeans_clusters = list()
+#     for i, cloud in enumerate(clouds):
+#         clusters = kmeans.fit_predict(cloud)
+#     end_time = time.perf_counter()
+# 
+#     kmeans_cluster_details = pd.DataFrame(
+#         {
+#             "$n$-clusters": len(kmeans_clusters),
+#             "$n$-points": len(cloud),
+#             "$n$-simplices": sum(len(s) for s in shape),
+#             "KMeans Time": start_time - end_time
+#         },
+#         index = [0]
+#     )
+# 
+#     return cluster_details, fig
+# 
 
 def process_args() -> argparse.Namespace:
     args = argparse.ArgumentParser()
@@ -219,21 +219,46 @@ def main() -> int:
     #     kmeans_cluster_details_dfs.append(kmeans_cluster_details)
     #     figs.append(fig)
 
+    fig, ax = plt.subplots(1, 1, figsize = (16, 9), dpi = 300, subplot_kw = {"projection": "3d"})
+    cm = sns.color_palette("mako", 50)[20]
+
     for file in io_h.get_data_dir.glob("*.xyz"):
-        print(f"Processing file: {file.name}".center(TERMINAL_WIDTH, "-"))
-        cluster_details, kmeans_cluster_details, fig_cluster, fig_shape = run_on_file_full(file)
+        if "4a" in file.stem:
+            continue
+        print(f"Processing file: {file.name}".center(TERMINAL_WIDTH, "="))
+        cloud, cluster_details, kmeans_cluster_details, alpha_clusters, alpha_complex = run_on_file_full(file)
         cluster_details_dfs.append(cluster_details)
         kmeans_cluster_details_dfs.append(kmeans_cluster_details)
-        figs.append(fig_cluster)
-        figs_shapes.append(fig_shape)
-        print(f"Processed file: {file.name}".center(TERMINAL_WIDTH, "-"))
+        triangles = [s for s in alpha_complex if s.shape[1] == 3]
+        ax.plot_trisurf(
+            *cloud.T,
+            triangles = triangles,
+            label = file.stem,
+            alpha = 0.8,
+            linewidth = 0.0,
+            color = cm
+        )
+        ax.grid(False)
 
-    # all_data_df = pd.merge(
-    #     pd.concat(cluster_details_dfs),
-    #     pd.concat(kmeans_cluster_details_dfs)["KMeans Time"],
+        fig.savefig(
+            CPD / "results" / "glacier" / "figs" / f"{dataset}_shape_timelapse_{file.stem}.png",
+            dpi = 300,
+            bbox_inches = "tight"
+        )
 
-    # )
-    
+        # fig_cluster.savefig(
+        #     CPD / "results" / "glacier" / "figs" / f"{dataset}_cluster_{file.stem}.png",
+        #     dpi = 300,
+        #     bbox_inches = "tight"
+        # )
+        # fig_shape.savefig(
+        #     CPD / "results" / "glacier" / "figs" / f"{dataset}_shape_{file.stem}.png",
+        #     dpi = 300,
+        #     bbox_inches = "tight"
+        # )
+        print(f"Processed file: {file.name}".center(TERMINAL_WIDTH, "="))
+        break
+
     io_h.write_results(
         dataset,
         cluster_details_dfs,
@@ -250,17 +275,17 @@ def main() -> int:
         join_axis = 0
     )
 
-    io_h.write_figs(
-        dataset,
-        figs,
-        [f"{dataset}_clusters_{i}" for i in range(len(figs))],
-    )
+    # io_h.write_figs(
+    #     dataset,
+    #     figs,
+    #     [f"{dataset}_clusters_{i}" for i in range(len(figs))],
+    # )
 
-    io_h.write_figs(
-        dataset,
-        figs_shapes,
-        [f"{dataset}_shape_{i}" for i in range(len(figs_shapes))],
-    )
+    # io_h.write_figs(
+    #     dataset,
+    #     figs_shapes,
+    #     [f"{dataset}_shape_{i}" for i in range(len(figs_shapes))],
+    # )
 
     # cluster_details, kmeans_cluster_details, fig = run_on_file_chunks(file, chunksize)
 

@@ -126,8 +126,8 @@ def evaluate_clusters(
         other_labels
     )
     
-    df1 = cl_eval_one.get_results(method = "Alpha clustering")
-    df2 = cl_eval_two.get_results(method = f"{method.capitalize()} clustering")
+    df1 = cl_eval_one.get_results(method = "$\\alpha$-clustering")
+    df2 = cl_eval_two.get_results(method = f"{method} clustering")
 
     for index in df1.index:
         change_style_format_df(df1, lambda x: f"{x:.2f}", row = index)
@@ -158,7 +158,7 @@ def summarise_points(
     df2 = clustering_obj.get_summary(
         dataset, 
         other_cluster_data = [(
-            f"Number of {other_clustering_obj.__class__.__name__} clusters", 
+            f"Number of $k-$means clusters", 
             len(np.unique(other_clustering_obj.labels_))
         )],
         threshold = 4
@@ -168,7 +168,7 @@ def summarise_points(
     change_style_format_df(df1, lambda x: f"{x:.0f}", row = "Number of simplices")
     change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Set cluster threshold")
     change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Number of alpha clusters")
-    change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Number of KMeans clusters")
+    change_style_format_df(df2, lambda x: f"{x:.0f}", row = "Number of $k-$means clusters")
     io.write_results(
         dataset,
         [df1, df2],
@@ -219,7 +219,7 @@ def main() -> None:
         points, 
         true_labels, 
         convert_clusters_format_to_sklearn(len(points), predicted_clusters), 
-        ("kmeans", other_clusters)
+        ("$k-$means", other_clusters)
     )
 
     summarise_points(

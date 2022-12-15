@@ -111,26 +111,26 @@ def main() -> int:
 
     varying_density_df = pd.DataFrame(
         {
-            "n-points": [int(x) for x in n_points],
+            "# points": [int(x) for x in n_points],
             "Densities": [1.26645, 3.49977, 4.66239, 6.22989, 8.32099, 10.3166, 10.8834, 12.1598, 14.8071, 16.0678, 16.9286, 18.2762, 19.3027, 23.7176, 23.2686, 24.9328, 26.4615, 28.8363, 29.2021, 30.6723],
-            "n-simplices": [int(x) for x in n_simplices],
-            "n-clusters-predicted": n_clusters_predicted
+            "# simplices": [int(x) for x in n_simplices],
+            "# clusters predicted": n_clusters_predicted
         }
     )
 
     varying_alpha_df = pd.DataFrame(
         {
             "Alpha": alphas,
-            "$n$-simplices": n_simplices_varying_alpha,
-            "$n$-clusters-predicted": n_clusters_predicted_varying_alpha,
-            "MI-scores": mi_scores_varying_alpha
+            "# simplices": n_simplices_varying_alpha,
+            "# clusters predicted": n_clusters_predicted_varying_alpha,
+            "MI scores": mi_scores_varying_alpha
         }
     )
 
     lr = LinearRegression()
     X_train, X_test, y_train, y_test = train_test_split(
-        varying_density_df["$n$-points"].to_numpy().reshape(-1, 1),
-        varying_density_df["$n$-simplices"].to_numpy(),
+        varying_density_df["# points"].to_numpy().reshape(-1, 1),
+        varying_density_df["# simplices"].to_numpy(),
         test_size = 0.2,
         random_state = 42
     )
@@ -148,14 +148,14 @@ def main() -> int:
     )
 
     change_style_format_df(varying_alpha_df, lambda x: f"{x:.2f}", col = "Alpha")
-    change_style_format_df(varying_alpha_df, lambda x: f"{x:.2f}", col = "MI-scores")
-    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "n-simplices")
-    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "n-clusters-predicted")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.2f}", col = "MI scores")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "# simplices")
+    change_style_format_df(varying_alpha_df, lambda x: f"{x:.0f}", col = "# clusters predicted")
 
     change_style_format_df(varying_density_df, lambda x: f"{x:.2f}", col = "Densities")
-    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-points")
-    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-simplices")
-    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "n-clusters-predicted")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "# points")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "# simplices")
+    change_style_format_df(varying_density_df, lambda x: f"{x:.0f}", col = "# clusters predicted")
 
     change_style_format_df(lr_df, lambda x: f"{x:.2f}", col = "coef")
     change_style_format_df(lr_df, lambda x: f"{x:.2f}", col = "intercept")
